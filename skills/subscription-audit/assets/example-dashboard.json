@@ -1,49 +1,49 @@
 {
   "as_of": "2030-01-15",
-  "title": "合成範例：訂閱與待處理項目",
-  "intro": "這是教學用合成資料，不是任何人的真實帳單。",
-  "status_boundary": "僅展示三個虛構服務，沒有連接信箱或銀行。",
+  "title": "Synthetic example: subscriptions and open questions",
+  "intro": "This tutorial uses synthetic data, not real bills from any account.",
+  "status_boundary": "Three fictional services are shown. No mailbox or bank account is connected.",
   "subscriptions": [
     {
       "id": "sample-notes",
       "name": "Example Notes",
       "initials": "N",
-      "category": "筆記工具",
+      "category": "Notes application",
       "plan": "Monthly",
       "status": "observed",
-      "status_label": "付費期間涵蓋查閱日",
-      "status_note": "合成收據顯示帳期為 1/1–2/1。",
+      "status_label": "Paid period covers the review date",
+      "status_note": "The synthetic receipt covers January 1 to February 1.",
       "cost": {
-        "label": "USD 12 / 月",
-        "note": "固定月繳；使用情況未知。",
+        "label": "USD 12 / month",
+        "note": "Fixed monthly billing; usage is unknown.",
         "kind": "fixed_monthly",
         "amount": "12.00",
         "currency": "USD",
         "include_monthly": true
       },
-      "renewal": "下期日期待核實。",
+      "renewal": "Next renewal date needs verification.",
       "needs_action": false,
       "priority": false,
       "issue": {
-        "title": "未發現具體計費問題",
-        "summary": "目前缺少使用紀錄。"
+        "title": "No specific billing issue found",
+        "summary": "Usage records have not been supplied."
       },
       "action": {
-        "summary": "確認是否仍需要，再決定下次續訂。",
+        "summary": "Confirm whether the service is still needed before deciding on renewal.",
         "steps": [
-          "查看用量。",
-          "確認續訂設定。"
+          "Check usage.",
+          "Verify renewal settings."
         ]
       },
       "evidence": [
         {
           "date": "2030-01-01",
-          "label": "合成收據 SYN-001",
-          "note": "此來源僅用於示範。"
+          "label": "Synthetic receipt SYN-001",
+          "note": "This source is for demonstration only."
         }
       ],
       "unknowns": [
-        "近期使用情況。"
+        "Recent usage."
       ],
       "drafts": [],
       "review_group": "none"
@@ -52,13 +52,13 @@
       "id": "sample-cloud",
       "name": "Example Cloud",
       "initials": "C",
-      "category": "運算服務",
+      "category": "Compute service",
       "status": "uncertain",
-      "status_label": "儲值已付／目前用量未知",
-      "status_note": "合成收據記載一次 USD 50 儲值。",
+      "status_label": "Top-up paid; current usage unknown",
+      "status_note": "A synthetic receipt records one USD 50 top-up.",
       "cost": {
-        "label": "USD 50 / 次儲值",
-        "note": "不是月費或可退款額。",
+        "label": "USD 50 / top-up",
+        "note": "This is neither a monthly fee nor an established refundable amount.",
         "kind": "prepaid",
         "amount": "50.00",
         "currency": "USD",
@@ -67,26 +67,26 @@
       "needs_action": true,
       "priority": true,
       "issue": {
-        "title": "目前餘額與自動儲值未明",
-        "summary": "需要帳戶流水。"
+        "title": "Current balance and auto top-up are unknown",
+        "summary": "An account ledger is needed."
       },
       "action": {
-        "summary": "取得點數、用量與自動儲值明細。",
+        "summary": "Obtain the credit ledger, usage records and auto top-up details.",
         "steps": [
-          "查看剩餘點數。",
-          "核對運行中資源與自動儲值設定。"
+          "Check the remaining credit balance.",
+          "Review running resources and automatic top-up settings."
         ]
       },
       "evidence": [
         {
           "date": "2029-12-15",
-          "label": "合成收據 SYN-002"
+          "label": "Synthetic receipt SYN-002"
         }
       ],
       "drafts": [
         {
-          "title": "帳務明細詢問",
-          "condition": "教學示例；請填入真實帳號與交易資訊後再審閱。",
+          "title": "Request for billing details",
+          "condition": "Tutorial example. Add the actual account and transaction details, then review before use.",
           "text": "Hello Support,\nPlease provide my payment, credit and usage ledger, along with my current balance and automatic top-up settings. Thank you."
         }
       ],
@@ -96,29 +96,29 @@
       "id": "sample-assistant",
       "name": "Example Assistant",
       "initials": "A",
-      "category": "使用者提及的服務",
+      "category": "User-named service",
       "status": "user_reported",
-      "status_label": "缺少付款證據",
-      "status_note": "使用者要求納入，尚未找到收據。",
+      "status_label": "Payment evidence missing",
+      "status_note": "The user asked to include this service; no receipt has been found.",
       "cost": {
-        "label": "金額待確認",
-        "note": "未知不等於零。",
+        "label": "Amount unknown",
+        "note": "Unknown does not mean zero.",
         "kind": "unknown",
         "include_monthly": false
       },
       "needs_action": true,
       "priority": false,
       "issue": {
-        "title": "帳號方案待核實"
+        "title": "Account plan needs verification"
       },
       "action": {
-        "summary": "查看帳戶或商店訂閱，補齊帳單與續訂日。"
+        "summary": "Check the account or app-store subscription for the invoice and renewal date."
       },
       "evidence": [
         {
           "date": "2030-01-15",
-          "label": "合成使用者陳述",
-          "note": "僅作發現線索，非付費證據。"
+          "label": "Synthetic user statement",
+          "note": "A discovery lead only, not proof of payment."
         }
       ],
       "review_group": "other"
@@ -127,41 +127,41 @@
   "other_cases": [
     {
       "id": "sample-refund",
-      "name": "Example Media 退款追蹤",
-      "category": "一次性購買退款",
+      "name": "Example Media refund trace",
+      "category": "One-time purchase refund",
       "status": "uncertain",
-      "status_label": "商家已確認處理，銀行待核對",
-      "status_note": "合成範例：商家通知退款已處理，沒有銀行入帳證據。",
+      "status_label": "Merchant processed; bank posting unverified",
+      "status_note": "Synthetic example: the merchant reports a processed refund, but no bank posting evidence is available.",
       "cost": {
-        "label": "USD 7.50 涉及退款",
-        "note": "既有退款追蹤，不算新追回款項。"
+        "label": "USD 7.50 refund under review",
+        "note": "An existing refund being traced, not newly recovered money."
       },
       "needs_action": true,
       "review_group": "refund",
       "refund_review": {
-        "reason": "商家退款確認已有紀錄，需要配對原付款帳戶。",
-        "amount_label": "USD 7.50；入帳未知",
+        "reason": "A merchant refund confirmation needs to be matched to the original payment account.",
+        "amount_label": "USD 7.50; receipt unverified",
         "eligibility": "refund_pending",
         "missing_evidence": [
-          "原付款帳戶入帳紀錄"
+          "Refund posting in the original payment account"
         ]
       },
       "issue": {
-        "title": "核對既有退款入帳",
-        "summary": "先查帳戶，若仍有疑問再要求退款追蹤資料。"
+        "title": "Verify receipt of an existing refund",
+        "summary": "Check the account first, then request refund tracking details if the refund remains unmatched."
       },
       "action": {
-        "summary": "核對原付款方式與退款通知。",
+        "summary": "Match the refund notice to the original payment method.",
         "steps": [
-          "查原付款帳戶明細。",
-          "若無法配對，再請商家提供退款編號。"
+          "Review the original payment account statement.",
+          "If the refund cannot be matched, request its reference from the merchant."
         ]
       },
       "evidence": [
         {
           "date": "2030-01-10",
-          "label": "合成退款確認 SYN-003",
-          "note": "虛構範例，不是真實帳務。"
+          "label": "Synthetic refund confirmation SYN-003",
+          "note": "Fictional example, not a real financial record."
         }
       ],
       "drafts": []
@@ -169,10 +169,10 @@
   ],
   "appendix": [],
   "coverage": {
-    "summary": "合成範例：3 項服務、1 筆既有退款追蹤；已知固定月費只含 Example Notes。",
+    "summary": "Synthetic example: 3 services and 1 existing refund trace. The known fixed monthly subtotal includes only Example Notes.",
     "notes": [
-      "沒有讀取真實帳號、信件、交易或網站。"
+      "No real accounts, messages, transactions or websites were accessed."
     ]
   },
-  "footer_note": "合成資料 · 可離線檢視"
+  "footer_note": "Synthetic data. Available offline."
 }

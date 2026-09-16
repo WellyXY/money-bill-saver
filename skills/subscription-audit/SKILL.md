@@ -7,6 +7,8 @@ description: Review bills, invoices, receipts and subscriptions across merchants
 
 Stage 0: review every merchant and bill type present in the user's selected evidence, then produce explainable findings and actionable drafts. An audit delivers a private visual web document with three sections in order: **current services**, **refund questions**, and **other issues**. Cover fixed subscriptions, usage bills, annual memberships, trials that became paid, app-store purchases, telecom/utilities and one-time purchases. Retain supporting data and local drafts. No product account, product backend or dedicated mailbox connector is required.
 
+Default all report copy, HTML interface text, human-readable JSON/CSV fields and repository documentation to **English**, unless the user explicitly requests another output language. Preserve original source quotations, names and identifiers; add an English translation when needed without replacing the original evidence.
+
 ## Start with the user's task
 
 Infer the mode from the request: **recover** for a particular charge/refund, **manage** for a subscription inventory/renewal/exit decision, **both** for a broad review of bills, waste and refund opportunities. Preserve specified vendors, accounts and dates. If dates are unspecified, use the supplied documents and state their coverage. A broad inventory is optional for a single-charge request. Merchant-specific references supplement the common workflow; their presence never limits which merchants to review.
@@ -63,6 +65,8 @@ Recommend retain, investigate, downgrade or cancel using the user's intent plus 
 
 ## 4. Prepare the action and verification
 
+**Before producing any audit webpage**, read [web-design.md](references/web-design.md) and the complete bundled [design-taste-frontend skill](references/design-taste-frontend/SKILL.md). Apply its context-relevant typography, color, layout, accessibility and preflight guidance under the audit's evidence, completeness and privacy requirements. This is a financial document: preserve every service and all three sections, use the self-contained renderer, and do not turn it into a marketing page or generate decorative imagery from private data.
+
 Read [deliverables.md](references/deliverables.md) for the inventory, draft and outcome formats. Audit output defaults to self-contained `dashboard.html` plus `dashboard.json`, with JSON/CSV evidence exports retained. Keep these three sections visible in order:
 
 1. **Current services:** every observed or user-named service, including normal/resolved entries and clearly labeled uncertain current states; show plan, cost basis, renewal and next action.
@@ -79,4 +83,4 @@ Track follow-up dates as data unless scheduling was requested. Use the local out
 
 ## Completion
 
-The selected scope has a source-backed inventory or charge conclusion; arithmetic/conflicts and data gaps are visible; each recommendation has a concrete evidence requirement or next step; any draft matches the merchant's channel; and any claimed completed action has a supporting receipt. For an audit, preview the visual document and verify all three sections, service data, issue classification, evidence links and draft controls using the host's permitted checks before delivery. An honest empty result or explained bill is a valid audit outcome. End in the user's language with the key findings, the visual document first, relevant supporting artifacts, unresolved evidence and proposed action; no invented recovery, account status or background monitoring.
+The selected scope has a source-backed inventory or charge conclusion; arithmetic/conflicts and data gaps are visible; each recommendation has a concrete evidence requirement or next step; any draft matches the merchant's channel; and any claimed completed action has a supporting receipt. For an audit, preview the visual document and verify all three sections, service data, issue classification, evidence links and draft controls using the host's permitted checks before delivery. Apply the relevant design preflight from [web-design.md](references/web-design.md). An honest empty result or explained bill is a valid audit outcome. Deliver in English by default, or the explicitly requested output language, with the key findings, the visual document first, relevant supporting artifacts, unresolved evidence and proposed action; no invented recovery, account status or background monitoring.

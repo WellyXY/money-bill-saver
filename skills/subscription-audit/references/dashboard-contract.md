@@ -14,6 +14,8 @@ Keep explicit empty states for empty sections. Do not use other issues to fill a
 
 ## Render
 
+Every audit webpage run must first read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). The integration preserves this contract's financial semantics, three sections, complete inventory and private offline output.
+
 Resolve the script and input/output paths from the installed skill and task directory:
 
 ```text
@@ -22,7 +24,7 @@ python scripts/render_dashboard.py --input dashboard.json --output dashboard.htm
 
 Use absolute paths when running the command. Existing output requires `--force`. The renderer reads `assets/dashboard.html`, embeds the supplied JSON with HTML delimiters escaped, computes selected counts/subtotals and writes a local HTML file with owner-only permissions. It makes no network requests. Opening an explicit evidence or support link navigates to that destination; copying a draft does not submit it.
 
-The template uses local CSS/JavaScript and system fonts. Keep it self-contained: no remotely loaded fonts, analytics, raw email HTML or tracking images. The provided interface is Traditional Chinese; localize the template when needed for the user's requested language while preserving its data and action boundaries. Publishing private dashboard data requires separate authorization.
+The template uses embedded CSS/JavaScript and system or self-contained embedded fonts. Keep it self-contained: no remotely loaded fonts, analytics, raw email HTML or tracking images. The interface and report data default to English; use another output language only when explicitly requested. Retain original source quotations and identifiers with translations as needed. Publishing private dashboard data requires separate authorization.
 
 ## Top-level object
 

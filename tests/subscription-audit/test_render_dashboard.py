@@ -56,8 +56,11 @@ class DashboardTests(unittest.TestCase):
 
     def test_document_needs_no_remote_assets(self):
         rendered = dashboard.render({'subscriptions': [service()]})
-        self.assertNotRegex(rendered, r'<(?:script|img|link)\b[^>]+(?:src|href)=')
+        asset_urls = re.findall(r'<(?:script|img|link)\b[^>]+(?:src|href)="([^"]*)"', rendered)
+        self.assertTrue(all(url.startswith('data:') for url in asset_urls))
         self.assertNotIn('__REPORT_DATA__', rendered)
+        self.assertNotIn('__FONT_DATA__', rendered)
+        self.assertIn('data:font/ttf;base64,', rendered)
 
     def test_legacy_issues_never_become_refund_claims_automatically(self):
         s = service(); s['needs_action'] = True

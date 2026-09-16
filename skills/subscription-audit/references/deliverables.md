@@ -1,6 +1,6 @@
 # Reports, drafts and follow-up
 
-Use the user's language for analysis. Draft in the merchant's support language when helpful. Keep actual identifiers in private local case material only where the merchant needs them; use local aliases in the overview.
+Default analysis, web interface, report copy, human-readable exports and support drafts to English unless the user explicitly requests another output language. Preserve original source quotations and identifiers, adding translations where useful. A different merchant submission language should be explicitly requested or presented as a clearly labeled optional translation. Keep actual identifiers in private local case material only where the merchant needs them; use local aliases in the overview.
 
 ## Artifact set
 
@@ -14,6 +14,8 @@ For an audit, use a private task-owned directory with:
 A single-charge audit keeps the three web sections scoped to that charge/service. Follow an explicitly requested alternative output format. Avoid producing empty files merely to fill the set. Source PDFs and extraction text are working evidence, not default shareable exports. Creating a private dashboard does not authorize uploading its financial or mailbox data to hosting.
 
 ## Visual document
+
+Before producing any audit webpage, read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). Use the audit integration guidance to apply appropriate design rules while preserving financial evidence and the complete inventory.
 
 Read [dashboard-contract.md](dashboard-contract.md) for the renderer schema and validation boundary. The default audit page presents these three sections in order:
 
@@ -31,7 +33,7 @@ Make the coverage boundary visible near the list. Label an evidence-supported pa
 
 Show only sourced fixed monthly prices in a per-currency monthly subtotal. Display variable usage, prepaid purchases, multi-month/annual equivalents and unknown prices separately. The renderer's computed subtotal is a subset, not the user's complete monthly spending. Historical invoice face values, settled payments, credits and refunds remain distinct quantities.
 
-Open the generated page locally and check all three sections against the source inventory and case classifications, including empty states, the counted monthly components, readable details, evidence links and copyable drafts. Priority affects emphasis, not whether a classified item is shown. Keep source text escaped and external resources out of the document; do not embed raw email HTML, tracking pixels or private invoice access tokens. The default template uses Traditional Chinese; localize its interface when the user's requested language differs.
+Open the generated page locally and check all three sections against the source inventory and case classifications, including empty states, the counted monthly components, readable details, evidence links and copyable drafts. Priority affects emphasis, not whether a classified item is shown. Keep source text escaped and network-loaded resources out of the document; do not embed raw email HTML, tracking pixels or private invoice access tokens. Default the template and data copy to English; localize them only when the user explicitly requests another output language. Check both light and dark themes, mobile layout, keyboard focus and reduced-motion behavior using the host's permitted verification tools.
 
 ## audit.md
 

@@ -1,51 +1,81 @@
-# AI 帳單與訂閱審核
+# Subscription Audit
 
-讓 Codex 審核各家帳單，找出多收、重複扣款、未使用、自動續訂與尚未取得的付費權益，再準備退款、訂正或取回權益的草稿。
+A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-版本：**v0.3.0 / Stage 0**。這是一個可安裝的 Codex Skill，搭配本地帳單工具與測試。
+**Version: v0.4.0 / Stage 0**
 
-## 審核範圍
+The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
-| 帳單／情境 | 檢查內容 |
+## What the audit delivers
+
+Every audit webpage contains three sections in this order:
+
+| Section | Contents |
 |---|---|
-| SaaS、影音、工具訂閱、會籍 | 固定費、年繳、漲價、優惠到期、未使用與重複功能 |
-| 雲端、API、電信、公用事業 | 單價、用量、席次、額度、超額費與服務期間 |
-| 試用轉付費、自動續訂 | 試用／續訂時間、通知、使用情況、取消與退款條件 |
-| App Store／支付平台帳單 | 實際銷售方、交易狀態與正確退款管道 |
-| 一次性購買或服務 | 報價差異、明細、是否交付及退款／補償依據 |
-| 已付費但未取得權益 | 功能、額度、服務期限、可恢復權益或申請補償的條件 |
+| **Current services** | Every observed or user-named service, its latest supported status, plan, cost basis and renewal information. Missing evidence stays visible. |
+| **Refund questions** | Specific concerns about overcharges, duplicate payments, unused paid periods, goodwill requests or pending refunds. Each includes its basis, amount under review, eligibility state, missing evidence and next step. |
+| **Other issues** | Renewal decisions, unknown prices, usage checks, missing benefits, reimbursements, dependencies and source gaps. |
 
-通用流程適用於提供的所有商家。Railway 是其中一份商家補充指南；其他商家依其官方帳務、退款與客服規則調查。
+Empty sections remain visible. A refund question does not mean a refund has been approved or is guaranteed. Normal and resolved services remain in the inventory.
 
-## 工作流程
+The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
 
-1. 從帳單、收據與歡迎／試用／方案／續訂／取消通知整理服務，使用者點名的服務即使缺收據也保留。
-2. 分清帳單、已付款收據、預告、付款失敗與退款文件，保留來源。
-3. 核對金額、明細、帳期、單價、用量、重複交易與續訂情況。
-4. 檢查使用程度與服務依賴，評估退款、取回權益或未來節省的機會。
-5. 交付可離線開啟的網頁，依序呈現現有服務、存疑可退款部分、其他問題，附證據、處理步驟與客服草稿。
-6. 依使用者另行授權與可用工具提交；用收據及後續證據追蹤結果。
+## Review coverage
 
-「沒有使用」會觸發退款評估。是否可退取決於購買管道、日期、商家條款及證據；條款不明時，可準備清楚說明情況的善意退款請求。取消未來續訂和要求退回已付費用會分別處理。
+| Bill or situation | Review focus |
+|---|---|
+| Software, media, tools and memberships | Fixed prices, annual billing, price changes, expired promotions, non-use and overlapping services |
+| Cloud, API, telecom and utilities | Rates, usage, seats, allowances, overages and service periods |
+| Trials and automatic renewals | Trial and renewal dates, notices, usage, cancellation history and refund conditions |
+| App-store and payment-platform purchases | Merchant of record, transaction status and the applicable refund channel |
+| One-time purchases and services | Quote differences, itemization, delivery and correction or refund evidence |
+| Missing paid or promised benefits | Feature access, credits, service periods, restoration and compensation conditions |
 
-## 安裝與使用
+The common workflow applies across merchants in the supplied evidence. Railway is one optional merchant reference, not the scope of the skill.
 
-將本倉庫的 [`skills/subscription-audit`](skills/subscription-audit) 資料夾放到 Codex 的 skills 目錄，通常為 `~/.codex/skills/`；若有設定 `CODEX_HOME`，則使用該目錄下的 `skills/`。更新既有版本時，替換同名 Skill 資料夾。
+Non-use triggers a separate refund assessment. Eligibility depends on the purchase channel, dates, applicable terms and evidence. A clearly attributed goodwill request can be appropriate when entitlement is not established. Cancelling future renewal and requesting a past-charge refund remain separate actions.
 
-在 Codex 中指定檔案並輸入：
+## Workflow
+
+1. Discover services from bills, receipts and welcome, plan, trial, renewal and cancellation notices. Keep services named by the user even when no receipt is found.
+2. Classify invoices, settled receipts, payment attempts, estimates, credits and incoming reimbursements before calculating totals.
+3. Follow later events for the same account and transaction. A newer payment or plan confirmation can change an earlier conclusion while the full timeline remains available.
+4. Check invoice arithmetic, identity, service periods, rates, usage and potential duplicate payments. Record evidence gaps explicitly.
+5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
+6. Apply the bundled design guidance and render the three-section webpage with evidence, actions and local drafts.
+7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
+
+## Install and use
+
+Copy this repository's [`skills/subscription-audit`](skills/subscription-audit) directory into your Codex skills directory, usually `~/.codex/skills/`. If `CODEX_HOME` is configured, use its `skills/` directory. Update an existing installation by replacing the same skill directory.
+
+Example request:
 
 ```text
-使用 $subscription-audit 審核我提供的所有帳單。
-找出多收、重複扣款、未使用、非預期續訂與沒拿到的權益，
-以可視化網頁列出所有服務、目前狀態、費用、可能問題和處理方式，
-保留證據缺口，並準備退款或客服申請草稿。
+Use $subscription-audit to review all bills I supply or authorize you to read.
+Investigate possible overcharges, duplicate payments, unused services,
+unwanted renewals and missing benefits. Deliver an English offline webpage
+with current services, refund questions and other issues, including costs,
+evidence gaps, next steps and support drafts.
 ```
 
-若要從信箱整理，請指定帳號與日期範圍，並使用已授權且在當前環境可用的郵件工具。Skill 本身沒有附帶 Gmail／Outlook 連接器；沒有連接器時，可以提供郵件匯出或帳單附件。範圍不完整會在報告中列明。
+For a mailbox review, specify the account and date range and use an authorized mail tool available in the current environment. This skill does not bundle a Gmail or Outlook connector. Mail exports and invoice attachments also work. Incomplete source coverage is disclosed in the result.
 
-## 本地工具
+Installing the skill alone does not authorize mailbox scanning. A service tool or existing login does not establish access to its invoices, usage or cancellation features.
 
-測試環境：Python 3.12。金額核對工具只使用 Python 標準函式庫；PDF 文字擷取使用 `pypdf` 或已安裝的 Poppler `pdftotext`。可在獨立環境安裝這份倉庫的已測試依賴：
+## Bundled design guidance
+
+Every audit webpage run must read the integration in [`web-design.md`](skills/subscription-audit/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/subscription-audit/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
+
+The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
+
+The page uses native CSS and self-contained assets. Light and dark themes, responsive layouts, readable financial data and accessible controls serve the audit. It does not become a conversion page, truncate the inventory to highlights, or require decorative generated imagery. Private bills and mailbox data are not used to generate decorative images.
+
+## Local tools
+
+The tools have been tested with Python 3.12. Invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable.
+
+Install the tested dependencies in an isolated environment:
 
 ```sh
 python3 -m venv .venv
@@ -53,7 +83,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-用合成範例驗證金額核對（此範例不是實際帳單）：
+Check the synthetic invoice example:
 
 ```sh
 mkdir -p work
@@ -62,30 +92,14 @@ python skills/subscription-audit/scripts/check_facts.py \
   --output work/example-checks.json
 ```
 
-擷取自己的 PDF：
+Extract a PDF supplied for the audit:
 
 ```sh
 python skills/subscription-audit/scripts/extract_pdf.py \
   /absolute/path/to/invoice.pdf --output-dir work/extracted
 ```
 
-三個工具都支援 `--help`，既有輸出需要 `--force` 才會覆寫。`work/` 已排除於版本控制；請把實際帳單、郵件、帳號對照及審核輸出保留在私人工作目錄。
-
-## 可視化訂閱文件
-
-每次完整審核預設產出 `dashboard.html` 與 `dashboard.json`，網頁依序包含三個主要區塊：
-
-| 區塊 | 內容 |
-|---|---|
-| **1. 現有服務** | 所有已觀測或使用者點名的服務、方案、狀態、費用與續費資訊；缺證據也保留並標明待確認。 |
-| **2. 存疑可退款部分** | 可能多收、重複扣款、未使用付費期間、善意退款或既有退款追蹤；列出理由、涉及金額、資格狀態、缺漏和下一步。 |
-| **3. 其他問題** | 續訂、未知費用、用量、權益、報銷與資料缺漏。 |
-
-即使退款區沒有項目，也會顯示空狀態。分類不自動認定款項可退，也不計成已追回金額。
-
-網頁可離線使用，包含每項服務的狀態、費用依據、可能問題、處理方式、來源時間線，以及可複製的客服草稿。另列報銷、押金、退款和其他一次性帳務。
-
-用合成範例產生網頁：
+Render the synthetic webpage example:
 
 ```sh
 python skills/subscription-audit/scripts/render_dashboard.py \
@@ -93,49 +107,61 @@ python skills/subscription-audit/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-未知費用不填零；目前固定月費、用量費、預付儲值、年／半年繳與歷史帳單分開。固定月費小計只納入有來源支持的項目，不代表完整支出。沒有連接所有帳戶時，清單會說明缺漏。
+All three tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
-HTML 使用內嵌資料、樣式與程式，沒有外部字型、圖片或追蹤器；來源連結只會在點選時開啟。產生網頁不會寄信或提交客服申請。真實私人網頁不應提交至公開倉庫。
+## Cost and evidence semantics
 
-格式：[dashboard-contract.md](skills/subscription-audit/references/dashboard-contract.md)。
+- Unknown prices remain unknown, not zero or public list prices.
+- Fixed monthly prices, variable usage, prepaid balances, annual or multi-month equivalents and historical invoice totals are separate quantities.
+- Fixed monthly subtotals include only source-supported, explicitly selected monthly prices and are separated by currency. They do not represent complete spending.
+- A reconciled invoice proves arithmetic consistency, not payment, appropriate metering or refund eligibility.
+- Failed payment notices, duplicate documents and pending authorizations do not establish duplicate settled charges.
+- An old receipt, a product announcement or absence of a cancellation email does not establish a currently active paid subscription.
+- Disabled auto-renew can coexist with a valid prepaid service term.
+- Cash refunds, credit awards, waived unpaid bills, restored benefits and estimated savings remain separate outcomes. Historical results do not become newly recovered money.
 
-## 驗證
+## Output and privacy
+
+`dashboard.html` contains its data, styles and scripts. System fonts or embedded font data keep the document self-contained. It does not load remote fonts, images, analytics or trackers; evidence and support links are followed only when the user chooses to open them.
+
+Rendering the webpage does not send messages, submit disputes or change accounts. Copying a draft is not submission. Real audit webpages and evidence should remain private and must not be committed to this public repository.
+
+The local helper scripts make no network requests. Evidence read by the assistant may still be processed by the model provider configured in the host; local execution does not imply local-only model processing.
+
+Original source text and identifiers are preserved. English summaries or translations do not replace source evidence. Another report language can be requested explicitly.
+
+## Validation
 
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
 ```
 
-44 項自動測試涵蓋金額精度、文件去重、缺漏與衝突、PDF 擷取、異常文字字元警示，以及跨商家、年繳、電信、續訂與一次性帳單。所有測試及範例資料均為合成資料。
+The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
-## v0.3.0 三區塊交付
+Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
 
-- 預設輸出固定為現有服務、存疑可退款部分、其他問題。
-- 新增退款理由、涉及金額、資格狀態與缺證據欄位；一般帳務疑問不自動列成可退款。
-- 所有待處理問題均顯示，優先級只調整排序。
-- 新增 4 項分類測試，驗證舊資料、退款依據、已解決案件與費用合計不混用。
+## v0.4.0
 
-## v0.2.0 完整清單與網頁交付
+- English defaults for reports, interface text, exports, examples and repository documentation, with explicit language overrides.
+- A full portable copy of `design-taste-frontend`, required reading for every audit webpage run.
+- Audit-specific design integration that preserves the complete financial inventory, three-section structure, private data and offline delivery.
+- Refined page presentation with theme, responsive-layout and interaction guidance while retaining the existing evidence and cost boundaries.
 
-- 保留所有發現的服務及使用者點名項目，區分當前證據、待確認和歷史狀態。
-- 搜尋帳單以外的方案與服務生命週期訊號，避免漏掉沒有收據的訂閱。
-- 沿同一事件追查後續狀態；較新付款訊號出現時，修正舊結論並停用不適用的草稿。
-- 新增自包含 HTML renderer、合成範例及 8 項測試，檢查金額分幣別、未知／儲值排除與資料安全嵌入。
+## Capability limits
 
-## v0.1.3 實測修正
+Codex performs reading, source research, usage interpretation and drafting. The helpers extract text, check invoice consistency and render sourced presentation data; they do not independently determine refund eligibility.
 
-- 郵件純文字為空白或 HTML 提示時，補讀 HTML 版本，避免漏掉帳單。
-- 保留試用結束、服務收費開始與首次出帳日期的差異及衝突。
-- 分別追蹤免費服務期、替換優惠碼及後續額度，不假設新補償已兌現舊權益。
-- 在承諾的工作日窗口完整結束後才跟進，寄送前先確認是否已有回覆。
-- 延續 v0.1.2 的 PDF 異常字元警示與原文保留。
+Scanned PDFs or complex layouts may require visual inspection or OCR. Extraction warnings identify unexpected control characters and preserve the original text for cross-checking; the helper does not guess missing characters or guarantee that every PDF can be parsed.
 
-## 第一版的能力邊界
+Mailbox discovery can be incomplete, and a current service inventory may require account pages, bank statements, app-store receipts or other billing accounts. These gaps must stay visible. The audit does not promise refunds, claim unverified non-use or silently cancel services.
 
-- Codex 負責閱讀、商家政策調查、使用判斷與撰寫；腳本負責文字擷取與金額一致性核對。
-- 帳單合計不等於已付款，數字相加正確也不表示計價合理。退款資格與使用情況需要各自的證據。
-- 掃描圖片或複雜版面可能需要視覺檢查／OCR；工具不保證解析每種格式。若擷取文字出現 NUL 等異常控制字元，逐頁清單會列出警示，原文會保留供交叉核對，工具不會猜補字元。
-- 發送、取消、調整方案與扣款上限依使用者授權及實際可用工具執行。完整審核預設交付本地網頁、JSON／CSV 和草稿。
-- 本地腳本不發出網路請求；交給模型閱讀的內容可能由執行環境的模型供應商處理。
+## Reference files
 
-入口：[`SKILL.md`](skills/subscription-audit/SKILL.md) · 通用判斷：[`billing-review.md`](skills/subscription-audit/references/billing-review.md) · 證據格式：[`facts-contract.md`](skills/subscription-audit/references/facts-contract.md)
+- [Skill entry point](skills/subscription-audit/SKILL.md)
+- [Common billing review](skills/subscription-audit/references/billing-review.md)
+- [Facts and outcomes contract](skills/subscription-audit/references/facts-contract.md)
+- [Deliverables](skills/subscription-audit/references/deliverables.md)
+- [Dashboard data contract](skills/subscription-audit/references/dashboard-contract.md)
+- [Web design integration](skills/subscription-audit/references/web-design.md)
+- [Bundled design skill](skills/subscription-audit/references/design-taste-frontend/SKILL.md)

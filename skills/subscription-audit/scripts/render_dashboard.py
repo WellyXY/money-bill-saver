@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Render a private, self-contained subscription review from sourced JSON."""
 import argparse
+import base64
 from collections import Counter
 from decimal import Decimal, InvalidOperation
 import json
@@ -100,7 +101,10 @@ def render(report):
     serialized = json.dumps(report, ensure_ascii=False, allow_nan=False)
     # JSON lives in an inert script element; escape HTML delimiters and JS separators.
     serialized = serialized.replace('&', '\\u0026').replace('<', '\\u003c').replace('>', '\\u003e').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
-    return template.read_text(encoding='utf-8').replace('__REPORT_DATA__', serialized)
+    font = template.parent / 'fonts' / 'Manrope-Variable.ttf'
+    # Embed the licensed local font so opening a private report makes no font request.
+    page = template.read_text(encoding='utf-8').replace('__FONT_DATA__', base64.b64encode(font.read_bytes()).decode('ascii'))
+    return page.replace('__REPORT_DATA__', serialized)
 
 
 def main():
