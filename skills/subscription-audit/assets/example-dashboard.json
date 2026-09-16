@@ -74,7 +74,23 @@
             "label": "Service period ends"
           }
         }
-      }
+      },
+      "review_signals": [
+        {
+          "type": "functional_overlap",
+          "title": "Compare note-drafting workflows",
+          "reason": "Example Notes and the user-named Example Assistant may both help draft notes; their actual roles have not been compared.",
+          "evidence_note": "SYN-001 supports a paid Notes period. The synthetic user statement only identifies Assistant; it does not establish a second paid subscription or interchangeable features.",
+          "next_check": "Ask which note-drafting tasks each tool handled in the last 30 days, then verify Assistant pricing and any export dependencies.",
+          "related_service_ids": [
+            "sample-assistant"
+          ],
+          "source_ids": [
+            "SYN-001",
+            "SYN-USER-001"
+          ]
+        }
+      ]
     },
     {
       "id": "sample-cloud",
@@ -140,7 +156,20 @@
           "note": "No event date established by the synthetic records.",
           "sources": []
         }
-      }
+      },
+      "review_signals": [
+        {
+          "type": "usage_unverified",
+          "title": "Check credit use and running resources",
+          "reason": "The historical top-up makes it useful to check whether the balance or resources still serve a current need.",
+          "evidence_note": "The selected record is a December 15, 2029 top-up receipt. No activity ledger was supplied; this is not proof of non-use or repeated monthly charges.",
+          "next_check": "Review current balance, running compute and storage, team dependencies and usage since the top-up before choosing a refund inquiry or resource change.",
+          "related_service_ids": [],
+          "source_ids": [
+            "SYN-002"
+          ]
+        }
+      ]
     },
     {
       "id": "sample-assistant",
@@ -168,7 +197,8 @@
         {
           "date": "2030-01-15",
           "label": "Synthetic user statement",
-          "note": "A discovery lead only, not proof of payment."
+          "note": "A discovery lead only, not proof of payment.",
+          "id": "SYN-USER-001"
         }
       ],
       "review_group": "other",
@@ -191,7 +221,23 @@
           "note": "No event date established by the synthetic records.",
           "sources": []
         }
-      }
+      },
+      "review_signals": [
+        {
+          "type": "functional_overlap",
+          "title": "Compare note-drafting workflows",
+          "reason": "The user-named assistant could overlap with Example Notes for note drafting, but its current paid plan and use are unknown.",
+          "evidence_note": "This is a synthetic workflow comparison lead based on a user-named service and the Notes receipt; it does not establish duplicate payment.",
+          "next_check": "Verify the Assistant plan and recent tasks, then compare them with Example Notes before estimating any future savings.",
+          "related_service_ids": [
+            "sample-notes"
+          ],
+          "source_ids": [
+            "SYN-USER-001",
+            "SYN-001"
+          ]
+        }
+      ]
     }
   ],
   "other_cases": [
@@ -239,7 +285,7 @@
   ],
   "appendix": [],
   "coverage": {
-    "summary": "Synthetic example: 3 services and 1 existing refund trace. The known fixed monthly subtotal includes only Example Notes.",
+    "summary": "Synthetic example: 3 inventory services/leads, 3 screening signals and 1 existing refund trace. These are separate counts. Only Example Notes contributes to the known monthly baseline.",
     "notes": [
       "No real accounts, messages, transactions or websites were accessed."
     ]

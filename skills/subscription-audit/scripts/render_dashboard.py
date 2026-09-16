@@ -123,6 +123,36 @@ def prepare_monthly_cost(report, services):
     return totals, normalized
 
 
+def prepare_review_signals(services):
+    """Validate screening leads without deriving paid status or refund claims."""
+    service_ids = {service['id'] for service in services}
+    fields = {'type', 'title', 'reason', 'evidence_note', 'next_check', 'related_service_ids', 'source_ids'}
+    for service in services:
+        sid = service['id']
+        signals = service.setdefault('review_signals', [])
+        if not isinstance(signals, list):
+            raise ValueError(f'{sid}: review_signals must be an array')
+        for signal in signals:
+            if not isinstance(signal, dict) or set(signal) != fields:
+                raise ValueError(f'{sid}: review signals require exactly the documented screening fields')
+            if not isinstance(signal['type'], str) or signal['type'] not in {'functional_overlap', 'usage_unverified', 'trial_conversion'}:
+                raise ValueError(f'{sid}: invalid review signal type')
+            for field in ('title', 'reason', 'evidence_note', 'next_check'):
+                if not isinstance(signal[field], str) or not signal[field].strip():
+                    raise ValueError(f'{sid}: review signal requires {field}')
+            for field in ('related_service_ids', 'source_ids'):
+                values = signal[field]
+                if not isinstance(values, list) or not all(isinstance(value, str) and value.strip() for value in values):
+                    raise ValueError(f'{sid}: review signal {field} must be an array of nonempty strings')
+                if len(values) != len(set(values)):
+                    raise ValueError(f'{sid}: review signal {field} must not repeat references')
+            peers = signal['related_service_ids']
+            if any(peer == sid or peer not in service_ids for peer in peers):
+                raise ValueError(f'{sid}: review signal peers must refer to other inventory services')
+            if signal['type'] == 'functional_overlap' and not peers:
+                raise ValueError(f'{sid}: functional overlap requires a related service')
+
+
 def prepare(report):
     if not isinstance(report, dict):
         raise ValueError('The report must be an object')
@@ -165,6 +195,7 @@ def prepare(report):
                 raise ValueError(f'{sid}: invalid amount')
             totals[currency] = totals.get(currency, Decimal('0')) + amount
             included.append(service['name'])
+    prepare_review_signals(services)
     monthly_baseline, monthly_baseline_items = prepare_monthly_cost(report, services)
     other_cases = report.get('other_cases', [])
     if not isinstance(other_cases, list):
@@ -204,6 +235,8 @@ def prepare(report):
         'observed_count': statuses['observed'],
         'uncertain_count': statuses['uncertain'] + statuses['user_reported'],
         'action_count': sum(bool(s.get('needs_action')) for s in services),
+        'review_lead_count': sum(bool(s['review_signals']) for s in services),
+        'review_signal_count': sum(len(s['review_signals']) for s in services),
         'refund_count': groups['refund'],
         'other_issue_count': groups['other'],
         'known_monthly': {c: format(v, '.2f') for c, v in sorted(totals.items())},

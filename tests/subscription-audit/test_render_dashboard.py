@@ -95,6 +95,65 @@ class DashboardTests(unittest.TestCase):
         s = service(); s.update(needs_action=False, review_group='refund')
         with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
 
+    def test_screening_leads_count_services_separately_and_do_not_create_refunds(self):
+        a, b = service('a'), service('b')
+        a['review_signals'] = [self.review_signal(), self.review_signal('functional_overlap', ['b'])]
+        b.update(status='uncertain', needs_action=True, review_group='other')
+        b['cost']['include_monthly'] = False
+        b['review_signals'] = [self.review_signal('trial_conversion')]
+        result = dashboard.prepare({'subscriptions': [a, b], 'computed': {'review_lead_count': 999}})['computed']
+        self.assertEqual(result['review_lead_count'], 2)
+        self.assertEqual(result['review_signal_count'], 3)
+        self.assertEqual(result['refund_count'], 0)
+        self.assertEqual(result['other_issue_count'], 1)
+        self.assertEqual(result['known_monthly'], {'USD': '9.90'})
+        self.assertEqual(result['monthly_baseline'], {})
+        self.assertEqual(a['review_group'], 'none')
+        self.assertEqual(b['status'], 'uncertain')
+        self.assertNotIn('refund_review', b)
+
+    def test_legacy_service_has_no_automatic_review_signals(self):
+        s = service(); s['status_note'] = 'No service update emails in the supplied files.'
+        result = dashboard.prepare({'subscriptions': [s]})['computed']
+        self.assertEqual(s['review_signals'], [])
+        self.assertEqual(result['review_lead_count'], 0)
+        self.assertEqual(result['review_signal_count'], 0)
+
+    def test_review_signals_cannot_bypass_refund_basis_checks(self):
+        s = service(); s.update(needs_action=True, review_group='refund', review_signals=[self.review_signal()])
+        with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+
+    def test_review_signal_shape_requires_rationale_and_next_check(self):
+        invalid = [('type', 'refund_eligible'), ('type', []), ('title', ''), ('reason', '  '), ('evidence_note', None), ('next_check', ''), ('related_service_ids', None), ('source_ids', 'receipt'), ('source_ids', ['']), ('source_ids', ['x', 'x'])]
+        for field, value in invalid:
+            with self.subTest(field=field, value=value):
+                signal = self.review_signal(); signal[field] = value
+                s = service(); s['review_signals'] = [signal]
+                with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+        for signals in [None, {}, [None], [{}]]:
+            with self.subTest(signals=signals):
+                s = service(); s['review_signals'] = signals
+                with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+        for field in ['amount', 'eligibility']:
+            with self.subTest(field=field):
+                signal = self.review_signal(); signal[field] = 'unsupported claim'
+                s = service(); s['review_signals'] = [signal]
+                with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+
+    def test_overlap_requires_a_distinct_inventory_peer(self):
+        for peers in [[], ['sample'], ['missing'], ['claim'], ['peer', 'peer']]:
+            with self.subTest(peers=peers):
+                s = service(); s['review_signals'] = [self.review_signal('functional_overlap', peers)]
+                with self.assertRaises(ValueError):
+                    dashboard.prepare({'subscriptions': [s, service('peer')], 'other_cases': [{'id': 'claim'}]})
+
+    def test_screening_sources_are_preserved_locators_not_assumed_file_paths(self):
+        s = service(); signal = self.review_signal()
+        signal['source_ids'] = ['mail-message-1', 'https://example.invalid/source/2']
+        s['review_signals'] = [signal]
+        result = dashboard.prepare({'subscriptions': [s]})
+        self.assertEqual(result['subscriptions'][0]['review_signals'][0]['source_ids'], signal['source_ids'])
+
     def test_missing_billing_dates_stay_unknown_even_with_renewal_text(self):
         s = service(); s['renewal'] = 'Term ends 2030-02-01'
         dashboard.prepare({'subscriptions': [s]})
@@ -172,6 +231,10 @@ class DashboardTests(unittest.TestCase):
                 summary = self.monthly_summary([self.monthly_item()]); summary[field] = value
                 with self.assertRaises(ValueError):
                     dashboard.prepare({'subscriptions': [service()], 'monthly_cost': summary})
+
+    @staticmethod
+    def review_signal(kind='usage_unverified', peers=None):
+        return {'type': kind, 'title': 'Check whether this service is still needed', 'reason': 'The supplied receipt does not establish recent use.', 'evidence_note': 'Only selected synthetic billing records were reviewed; mailbox absence and non-use are not established.', 'next_check': 'Review account activity and dependencies for the paid period.', 'related_service_ids': peers or [], 'source_ids': []}
 
     @staticmethod
     def monthly_item(sid='sample', amount='9.90', currency='USD', months=1):

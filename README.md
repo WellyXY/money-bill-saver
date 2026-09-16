@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.6.1 / Stage 0**
+**Version: v0.7.0 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -12,11 +12,23 @@ Every audit webpage contains three sections in this order:
 
 | Section | Contents |
 |---|---|
-| **Current services** | Every observed or user-named service, its latest supported status, plan, cost basis, last invoice issue date, last successful charge date and next renewal. Missing evidence stays visible. |
-| **Refund questions** | Specific concerns about overcharges, duplicate payments, unused paid periods, goodwill requests or pending refunds. Each includes its basis, amount under review, eligibility state, missing evidence and next step. |
+| **Current services** | One inventory with Services & dates and Monthly cost sheet views. Every observed or user-named service retains its plan, supported status, three billing dates, cost basis and review labels. Search and filters apply to both views. |
+| **Refund questions** | A visible queue of overlap, usage and trial-payment leads, followed by separately counted specific refund cases. Specific cases include their basis, amount under review, eligibility state, missing evidence and next step. |
 | **Other issues** | Renewal decisions, unknown prices, usage checks, missing benefits, reimbursements, dependencies and source gaps. |
 
 Empty sections remain visible. A refund question does not mean a refund has been approved or is guaranteed. Normal and resolved services remain in the inventory.
+
+The inventory count includes uncertain and historical entries; it is not a count of confirmed paid subscriptions. The cost sheet uses the same service list. Its full-inventory baseline stays unchanged when a display filter hides rows.
+
+### From a review lead to a refund request
+
+| Signal | First check | Possible next action |
+|---|---|---|
+| Similar services | Compare actual workflows, required features and recent use; verify both paid plans | Keep both, consolidate or investigate an unwanted paid period |
+| Old records or usage unknown | Check activity for a stated period and current billing; ask for the user's usage context | Keep, downgrade, cancel a future renewal, or assess a past charge |
+| Trial may have become paid | Match the trial notice to a settled charge, plan and cancellation history | Explain the charge or assess a supported refund/goodwill request |
+
+Missing update emails do not establish non-use, continued billing or refund eligibility. A gap in selected evidence is not proof that no later messages exist. Review leads are highlighted in both inventory views, carry a specific next check and do not add a refundable amount. A claim needs its own charge, period, usage or discrepancy evidence and applicable seller terms. User-reported non-use can support an honestly attributed goodwill request; it does not establish an entitlement.
 
 The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
 
@@ -141,6 +153,13 @@ python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.7.0
+
+- One inventory with status/date and monthly-cost tabs, shared filters and explicit count semantics.
+- Visible review labels for functional overlap, uncertain usage and possible trial conversion.
+- A proactive review queue with evidence limits and concrete next checks, separate from specific refund cases and money totals.
+- Guarded signal data, valid peer references and independent service/signal counts.
 
 ## v0.6.1
 

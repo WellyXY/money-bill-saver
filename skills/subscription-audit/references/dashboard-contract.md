@@ -6,11 +6,13 @@ Use this contract for `dashboard.json`, then render a private, self-contained `d
 
 A full audit always shows these sections in order:
 
-1. **Current services:** every row from `subscriptions`, with uncertain/historical states labeled. User-named services remain visible even without a receipt.
-2. **Refund questions:** rows from either `subscriptions` or `other_cases` classified as `review_group: refund`. Each has a specific sourced reason, amount under review, eligibility state, missing evidence and next step/draft; inclusion does not mean a refund is guaranteed.
+1. **Current services:** every row from `subscriptions`, with uncertain/historical states labeled. User-named services remain visible even without a receipt. Provide **Services & dates** and **Monthly cost sheet** tabs for the same inventory, with shared search/review filters; explain their state/date and financial purposes.
+2. **Refund questions:** show screening leads in a clearly separate **Worth checking before a refund request** group, followed by **Specific refund cases** from `subscriptions` or `other_cases` classified as `review_group: refund`. A lead needs a usage, overlap or trial check; it is not yet a refund claim. Each refund case has a specific sourced reason, amount under review, eligibility state, missing evidence and next step/draft; inclusion does not mean a refund is guaranteed.
 3. **Other issues:** rows from either array classified as `review_group: other`, such as renewal decisions, unknown fees, benefits, reimbursements, usage/dependency checks and source gaps.
 
 Keep explicit empty states for empty sections. Do not use other issues to fill an empty refund section. Inventory visibility is independent of issue grouping: a service remains in the first section even when it also appears in a later section. `priority` can affect emphasis but must not hide classified issues.
+
+Counts describe their denominator: “14 services and leads” means 14 inventory rows, which can include observed, uncertain and historical states; it does not mean 14 confirmed paid subscriptions. `observed` itself can reflect service activity or entitlement rather than a settled charge. The cost sheet retains the same rows, including Unknown monthly costs, while only supported components enter the baseline. Screening badges must remain visible in both views. Tab changes and filters change visible rows only; the monthly baseline still describes the full inventory and must be labeled accordingly.
 
 ## Render
 
@@ -67,6 +69,7 @@ Both `subscriptions` and `other_cases` use the same display fields. Give every r
 | `needs_action` | boolean | Whether this row requires a user check or proposed action |
 | `review_group` | enum, optional | `refund`, `other` or `none`; determines the issue section as specified below |
 | `refund_review` | object | Required structured refund question when `review_group` is `refund` |
+| `review_signals` | optional array | Specific screening leads, independent of refund classification and monetary totals; defined below |
 | `priority` | boolean, optional | Emphasis/order hint only; does not decide whether a classified issue is displayed |
 | `issue` | object | `title`, `summary` and optional `detail` strings; an unknown or resolved finding is valid |
 | `action` | object | `summary`, `steps` array of strings, and optional official `url` and `link_label` |
@@ -105,6 +108,30 @@ Last invoice means the issue date of the latest observed invoice, not its due da
 Next renewal is a dated renewal/next-charge event supported by the account or merchant notice. Distinguish it from term end, expiry, trial conversion and a historical inferred billing cadence. If auto-renew is off but a manual renewal date is given, retain the date with a visible manual-renewal `qualifier` and a full explanatory note. If no upcoming renewal is scheduled, use not_scheduled only with evidence; absence of a renewal notice is merely unknown. Do not invent a clock time or timezone for day-only sources.
 
 The details view retains full notes and source references for each event. CSV exports keep separate date, status and note columns; do not combine the three dates into a generic last-activity field.
+
+### Screening leads
+
+During a broad manage/both audit, screen every inventory service for functional overlap, uncertain use and trial conversion. Add `review_signals` only when the available evidence or an attributed user concern gives a concrete reason to check. A generic newsletter or missing usage connection alone does not make every merchant a suspicious paid service. Use an empty array when no specific lead is supported. Legacy inputs without the array receive an empty array; the renderer never mines prose or dates to invent signals.
+
+Each signal has exactly these fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `type` | enum | `functional_overlap`, `usage_unverified` or `trial_conversion` |
+| `title` | nonempty string | Short visible check, such as “Compare overlapping writing tools” |
+| `reason` | nonempty string | Why this service merits review; separate a plausible inference from established facts |
+| `evidence_note` | nonempty string | Available source/date coverage, what it supports and what remains unknown |
+| `next_check` | nonempty string | The smallest practical check that advances the decision |
+| `related_service_ids` | array of strings | Other inventory service IDs; no self, duplicate or non-service references. At least one is required for functional overlap. |
+| `source_ids` | array of strings | Unique stable evidence IDs or locators, including URLs when appropriate. These are references, not paths to fetch. An empty array is allowed for a declared evidence gap; explain its boundary in `evidence_note`. |
+
+The signal object contains no refundable amount, eligibility state or assumed saving. Keep those in the separate financial/case model only after the relevant evidence review. Signals do not automatically change `status`, `needs_action`, `review_group`, dates or baseline inclusion. An unresolved screening lead can coexist with an otherwise normal service or with a distinct existing refund case.
+
+Functional overlap means a possible shared job or workflow, not identical products or proven duplicate subscriptions. Identify the peer, compare actual use and required features, and verify prices and exit dependencies before estimating future savings. `usage_unverified` can flag a paid service with no established recent use, or a long gap in the available reviewed records. State the last supported event and reviewed coverage rather than claiming the whole mailbox was silent or that charges continued throughout the gap. Product-update email is neither account activity nor proof of non-use. `trial_conversion` flags an announced conversion whose paid outcome needs checking; it does not imply that a charge occurred.
+
+Any time threshold is a configurable review heuristic, not a merchant refund window. For example, a 60- or 90-day gap can prioritize an activity check only when its start, end, source coverage and service context are stated. The next check should establish usage for a defined period, background resources/team dependencies and actual payments. Refer to [billing-review.md](billing-review.md) for when a screening lead can become a refund, goodwill or future cost-reduction case.
+
+Show the lead title, its screening status and next check in the Worth checking before a refund request group, with full reasons, coverage and references in details. Preserve separate counts for services worth reviewing, individual signals and specific refund cases. Neither screening count is an approved refund count or an amount recoverable.
 
 ### Review group and refund basis
 
@@ -208,6 +235,8 @@ The renderer replaces any supplied `computed` value with:
 - `observed_count`: rows with status `observed`.
 - `uncertain_count`: rows with status `uncertain` or `user_reported`.
 - `action_count`: subscription rows with truthy `needs_action`; non-subscription cases are excluded.
+- `review_lead_count`: distinct subscription rows with at least one validated screening signal, independent of refund classification.
+- `review_signal_count`: total validated signals across subscription rows; a service may have more than one.
 - `refund_count`: rows classified as `refund` across `subscriptions` and `other_cases`; this is a count of review questions, not approved refunds.
 - `other_issue_count`: rows classified as `other` across both arrays.
 - `known_monthly`: per-currency totals from explicitly opted-in fixed monthly rows.
@@ -215,12 +244,12 @@ The renderer replaces any supplied `computed` value with:
 - `monthly_baseline`: per-currency, two-decimal totals normalized from validated `monthly_cost.items`; empty when absent.
 - `monthly_baseline_items`: input-order item objects retaining `service_id`, `amount`, `currency`, `months`, `basis` and `sources`, with computed `monthly_amount` added for display.
 
-The JSON input does not need a `computed` field. Rendering checks subscription structure, unique nonempty IDs across services and other cases, the counted amount constraints and review-group values. Refund rows must be actionable, contain evidence and have valid required `refund_review` fields. These structural checks do not validate every display field, source freshness, truthful classification or refund eligibility. Those remain evidence-review responsibilities.
+The JSON input does not need a `computed` field. Rendering checks subscription structure, unique nonempty IDs across services and other cases, the counted amount constraints, signal shape/peer references and review-group values. Refund rows must be actionable, contain evidence and have valid required `refund_review` fields. These structural checks do not validate every display field, source freshness, truthful classification or refund eligibility. Those remain evidence-review responsibilities.
 
 Before delivery, compare the page with the canonical inventory: all three sections are visible, empty sections say so, user-named services are present, latest events supersede obsolete findings, refund questions have a supported basis, fixed monthly components and the normalized baseline have the intended distinct bases, non-subscription receipts are separate, and unknowns remain visible. Check baseline arithmetic, covered terms and current account evidence; do not present the estimate as actual cash payments. Check representative details and drafts in the rendered data, evidence destinations and that the document has no automatic remote-resource loads. Follow the host's verification rules for browser interaction testing. Deliver the local web document first, with JSON/CSV and supporting report links as needed.
 
 ### Cost sheet presentation
 
-The monthly summary shows every service in a cost table: price evidence, billing basis, monthly equivalent, inclusion/coverage, and notes or evidence gaps. Only `computed.monthly_baseline_items` supply counted equivalents; other rows display Unknown. Keep detailed notes available without turning the scan view into long paragraphs. On mobile, preserve readable columns with an accessible horizontal scroll region.
+The monthly summary shows every service in a cost table: price evidence, billing basis, monthly equivalent, inclusion/coverage, screening badges and notes or evidence gaps. Explain that this is the financial view of the same inventory shown under Current services, whose purpose is plan/state and billing dates. Only `computed.monthly_baseline_items` supply counted equivalents; other rows display Unknown. Keep detailed notes available without turning the scan view into long paragraphs. On mobile, preserve readable columns with an accessible horizontal scroll region.
 
 When requested, create a matching private workbook using the host's spreadsheet tools. Keep the original amount, currency and covered months beside the formula-derived equivalent; separate cash charges, historical top-ups, waivers and unknowns. Set `cost_sheet_file` only after the workbook has been saved and checked beside the HTML. The template permits simple `.xlsx` filenames without protocols or directories. Deliver the workbook together with the HTML to preserve its download link. Neither file belongs in a public repository.

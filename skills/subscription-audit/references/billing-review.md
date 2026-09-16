@@ -54,9 +54,25 @@ Build the current service list from dated state evidence: a paid period covering
 
 Invoice arithmetic is only one check. A perfectly adding bill may use the wrong rate, duplicate a previously paid service or describe a service the user does not need. A large increase is a review signal; attribute the expected amount and do not label the whole difference refundable by default.
 
+### Proactive screening before a refund case exists
+
+For manage/both audits, check every inventory row for these leads and highlight supported leads before all eligibility evidence is available. Retain the reason, reviewed-source boundary and concrete next check in `review_signals` as defined in `dashboard-contract.md`. Keep these leads separate from specific refund cases and monetary totals.
+
+| Signal | What justifies highlighting it | Next evidence and decision |
+|---|---|---|
+| Functional overlap | Two discovered services plausibly serve the same user job, or the user reports duplication | Identify both services and ask which workflows, required features and recent tasks each supports. Verify current paid plans and dependencies. Retain both when their roles differ; assess future savings when a viable exit is established. Overlap alone does not establish a refund basis. |
+| Use not established | A supported paid term has no supplied activity evidence, an attributed user concern suggests disuse, or available historical service records leave a material current-use gap | State the paid term or last relevant record, the reviewed date/source coverage and what is unknown. Check recent account usage, the user's last use, team activity and running resources; then match any unwanted period to actual charges. |
+| Trial conversion unresolved | An account-specific trial notice announces conversion, but later payment/status is unresolved | Check cancellation, post-trial invoices/receipts and current plan before claiming any charge. If a paid conversion is evidenced, establish intent, activity and relevant terms for a refund or courtesy assessment. |
+
+“No updates” needs qualification. Product release announcements or newsletters do not establish account usage. No such emails, no telemetry connection or no activity in selected documents does not prove non-use, current paid status, recurring charges or refund entitlement. Describe a gap in the **available reviewed records** unless an actual scoped search establishes mailbox absence; even scoped mailbox absence is only a weak usage signal. Name relevant coverage limits and do not extrapolate a historical payment into continued monthly charges.
+
+Time-based screening thresholds are configurable review heuristics. A 30-, 60- or 90-day activity window can structure a question when appropriate to the service; record the chosen window and why it helps. It is not a universal inactivity definition or a refund deadline. Running storage, background jobs, occasional critical workflows and reserved phone numbers can remain valuable with few visible interactions.
+
 ## 3. Establish use and refund basis separately
 
 Record a charged-period activity observation as service-evidenced, user-reported or unknown, with its date range. An empty mailbox, no app telemetry connection, or missing login events does not prove non-use. Non-use reported by the user can be stated honestly in a request without presenting it as a vendor-confirmed fact. Check background processing, stored data, team members and production dependencies before recommending termination.
+
+Move a screening lead into a specific refund assessment only when a concrete concern is attributable to a payment, billed period or merchant action. For example, a receipt plus the user's dated report that they did not use an unwanted renewed period can support an **unverified** or **goodwill** review; it still does not prove entitlement. A matching cancellation receipt and subsequent inconsistent charged period can support a billing-discrepancy review. Missing usage alone calls for an activity check. An overlap decision with no past-charge concern calls for future cancellation/downgrade, not a retroactive refund claim. A processed refund with no matched bank credit calls for tracing that existing refund, not requesting it again.
 
 For each potential remedy, distinguish:
 
