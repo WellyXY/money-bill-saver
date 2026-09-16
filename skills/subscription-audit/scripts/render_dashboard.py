@@ -55,12 +55,39 @@ def prepare(report):
         if not isinstance(case, dict) or not isinstance(case.get('id'), str) or not case['id'] or case['id'] in ids:
             raise ValueError('Other cases must have unique nonempty ids across the report')
         ids.add(case['id'])
+    # Keep financial review separate from general account/renewal questions.
+    # Legacy reports default to the other-issues queue, never to a refund claim.
+    for row, default_action in [(s, False) for s in services] + [(c, True) for c in other_cases]:
+        row.setdefault('needs_action', default_action)
+        if not isinstance(row['needs_action'], bool):
+            raise ValueError(f"{row['id']}: needs_action must be a boolean")
+        row.setdefault('review_group', 'other' if row['needs_action'] else 'none')
+        group = row['review_group']
+        if group not in {'refund', 'other', 'none'}:
+            raise ValueError(f"{row['id']}: invalid review_group")
+        if (group == 'none') == row['needs_action']:
+            raise ValueError(f"{row['id']}: review_group conflicts with needs_action")
+        if group == 'refund':
+            review = row.get('refund_review')
+            if not isinstance(review, dict) or not row.get('evidence'):
+                raise ValueError(f"{row['id']}: refund review requires a basis and evidence")
+            for field in ('reason', 'amount_label'):
+                if not isinstance(review.get(field), str) or not review[field].strip():
+                    raise ValueError(f"{row['id']}: refund review requires {field}")
+            if review.get('eligibility') not in {'unverified', 'policy_supported', 'goodwill', 'refund_pending'}:
+                raise ValueError(f"{row['id']}: invalid refund eligibility state")
+            missing = review.get('missing_evidence', [])
+            if not isinstance(missing, list) or not all(isinstance(item, str) for item in missing):
+                raise ValueError(f"{row['id']}: missing_evidence must be an array of strings")
+    groups = Counter(row['review_group'] for row in services + other_cases)
     statuses = Counter(s.get('status', 'uncertain') for s in services)
     report['computed'] = {
         'service_count': len(services),
         'observed_count': statuses['observed'],
         'uncertain_count': statuses['uncertain'] + statuses['user_reported'],
         'action_count': sum(bool(s.get('needs_action')) for s in services),
+        'refund_count': groups['refund'],
+        'other_issue_count': groups['other'],
         'known_monthly': {c: format(v, '.2f') for c, v in sorted(totals.items())},
         'monthly_includes': included,
     }

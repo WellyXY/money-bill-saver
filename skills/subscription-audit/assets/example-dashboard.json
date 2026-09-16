@@ -45,7 +45,8 @@
       "unknowns": [
         "近期使用情況。"
       ],
-      "drafts": []
+      "drafts": [],
+      "review_group": "none"
     },
     {
       "id": "sample-cloud",
@@ -88,7 +89,8 @@
           "condition": "教學示例；請填入真實帳號與交易資訊後再審閱。",
           "text": "Hello Support,\nPlease provide my payment, credit and usage ledger, along with my current balance and automatic top-up settings. Thank you."
         }
-      ]
+      ],
+      "review_group": "other"
     },
     {
       "id": "sample-assistant",
@@ -118,13 +120,56 @@
           "label": "合成使用者陳述",
           "note": "僅作發現線索，非付費證據。"
         }
-      ]
+      ],
+      "review_group": "other"
     }
   ],
-  "other_cases": [],
+  "other_cases": [
+    {
+      "id": "sample-refund",
+      "name": "Example Media 退款追蹤",
+      "category": "一次性購買退款",
+      "status": "uncertain",
+      "status_label": "商家已確認處理，銀行待核對",
+      "status_note": "合成範例：商家通知退款已處理，沒有銀行入帳證據。",
+      "cost": {
+        "label": "USD 7.50 涉及退款",
+        "note": "既有退款追蹤，不算新追回款項。"
+      },
+      "needs_action": true,
+      "review_group": "refund",
+      "refund_review": {
+        "reason": "商家退款確認已有紀錄，需要配對原付款帳戶。",
+        "amount_label": "USD 7.50；入帳未知",
+        "eligibility": "refund_pending",
+        "missing_evidence": [
+          "原付款帳戶入帳紀錄"
+        ]
+      },
+      "issue": {
+        "title": "核對既有退款入帳",
+        "summary": "先查帳戶，若仍有疑問再要求退款追蹤資料。"
+      },
+      "action": {
+        "summary": "核對原付款方式與退款通知。",
+        "steps": [
+          "查原付款帳戶明細。",
+          "若無法配對，再請商家提供退款編號。"
+        ]
+      },
+      "evidence": [
+        {
+          "date": "2030-01-10",
+          "label": "合成退款確認 SYN-003",
+          "note": "虛構範例，不是真實帳務。"
+        }
+      ],
+      "drafts": []
+    }
+  ],
   "appendix": [],
   "coverage": {
-    "summary": "合成範例：3 項服務；已知固定月費只包含 Example Notes。",
+    "summary": "合成範例：3 項服務、1 筆既有退款追蹤；已知固定月費只含 Example Notes。",
     "notes": [
       "沒有讀取真實帳號、信件、交易或網站。"
     ]

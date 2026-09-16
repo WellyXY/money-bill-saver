@@ -5,7 +5,7 @@ description: Review bills, invoices, receipts and subscriptions across merchants
 
 # Subscription Audit
 
-Stage 0: review every merchant and bill type present in the user's selected evidence, then produce explainable findings and actionable drafts. For a broad audit, lead with the full observed service inventory and each service's current known status, possible issues and next action. Cover fixed subscriptions, usage bills, annual memberships, trials that became paid, app-store purchases, telecom/utilities and one-time purchases. Deliver a private visual web document with supporting data and local drafts. No product account, product backend or dedicated mailbox connector is required.
+Stage 0: review every merchant and bill type present in the user's selected evidence, then produce explainable findings and actionable drafts. An audit delivers a private visual web document with three sections in order: **current services**, **refund questions**, and **other issues**. Cover fixed subscriptions, usage bills, annual memberships, trials that became paid, app-store purchases, telecom/utilities and one-time purchases. Retain supporting data and local drafts. No product account, product backend or dedicated mailbox connector is required.
 
 ## Start with the user's task
 
@@ -63,7 +63,13 @@ Recommend retain, investigate, downgrade or cancel using the user's intent plus 
 
 ## 4. Prepare the action and verification
 
-Read [deliverables.md](references/deliverables.md) for the inventory, draft and outcome formats. A full audit defaults to self-contained `dashboard.html` plus `dashboard.json`, with JSON/CSV evidence exports retained. Read [dashboard-contract.md](references/dashboard-contract.md) when constructing the visual document and render it with `scripts/render_dashboard.py`. Produce the parts required by the mode; keep both queues when both were requested. A narrow charge question can use a concise response instead of the full dashboard.
+Read [deliverables.md](references/deliverables.md) for the inventory, draft and outcome formats. Audit output defaults to self-contained `dashboard.html` plus `dashboard.json`, with JSON/CSV evidence exports retained. Keep these three sections visible in order:
+
+1. **Current services:** every observed or user-named service, including normal/resolved entries and clearly labeled uncertain current states; show plan, cost basis, renewal and next action.
+2. **Refund questions:** evidence-backed concerns about overcharges, duplicate payments, unused paid periods or pending refunds. Show the reason, amount under review, eligibility state, missing evidence and next action/draft. A question is not a promise of refund eligibility.
+3. **Other issues:** renewal decisions, unknown costs, benefits, reimbursements, usage/dependencies and data gaps that do not yet support a specific refund question.
+
+Show an explicit empty state when a section has no items; never fill the refund section with unrelated problems. A service can remain in the inventory and also appear in its relevant issue section. Read [dashboard-contract.md](references/dashboard-contract.md) for the classification fields and render with `scripts/render_dashboard.py`. A narrow charge audit uses the same three sections, limited to that service and charge. Use a different delivery format only when the user requests one; explanatory questions about the skill can be answered directly.
 
 Stage 0 ends with local draft text, attachment checklist, official destination and manual next step. Respect earlier explicit authorization if the user separately asks for an external action: inspect the live tool capability and exact target, execute only within that scope, and preserve its receipt. This skill itself does not grant permission to send mail, create remote drafts, change plans/caps, schedule monitoring or submit disputes. Avoid repeated confirmation when the user already approved the specific action.
 
@@ -73,4 +79,4 @@ Track follow-up dates as data unless scheduling was requested. Use the local out
 
 ## Completion
 
-The selected scope has a source-backed inventory or charge conclusion; arithmetic/conflicts and data gaps are visible; each recommendation has a concrete evidence requirement or next step; any draft matches the merchant's channel; and any claimed completed action has a supporting receipt. For a full audit, preview the visual document and verify its service data, details, evidence links and draft controls using the host's permitted checks before delivery. An honest empty result or explained bill is a valid audit outcome. End in the user's language with the key findings, the visual document first, relevant supporting artifacts, unresolved evidence and proposed action; no invented recovery, account status or background monitoring.
+The selected scope has a source-backed inventory or charge conclusion; arithmetic/conflicts and data gaps are visible; each recommendation has a concrete evidence requirement or next step; any draft matches the merchant's channel; and any claimed completed action has a supporting receipt. For an audit, preview the visual document and verify all three sections, service data, issue classification, evidence links and draft controls using the host's permitted checks before delivery. An honest empty result or explained bill is a valid audit outcome. End in the user's language with the key findings, the visual document first, relevant supporting artifacts, unresolved evidence and proposed action; no invented recovery, account status or background monitoring.

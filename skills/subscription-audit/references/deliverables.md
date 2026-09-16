@@ -4,24 +4,34 @@ Use the user's language for analysis. Draft in the merchant's support language w
 
 ## Artifact set
 
-For a full audit, use a private task-owned directory with:
+For an audit, use a private task-owned directory with:
 
-- `dashboard.html`: the primary, self-contained visual document. Lead with the complete observed service list, including user-named services with missing evidence, then show issues, concrete actions, source timelines and available drafts.
+- `dashboard.html`: the primary, self-contained visual document with three sections in order: current services, refund questions and other issues. Include source timelines, concrete next actions and available drafts in the relevant details.
 - `dashboard.json`: the sourced presentation data specified in [dashboard-contract.md](dashboard-contract.md). Generate the page with `scripts/render_dashboard.py`; keep unknown status and price visible.
 - `facts.json`, `checks.json` and `subscriptions.csv`: the underlying invoice checks and service inventory. The CSV reflects the same services and status dates as the dashboard, without mixing historical invoice sums into current monthly price.
 - `cases.json`, local draft files and `outcomes.json` when the task contains cases or tracked outcomes. `audit.md` can provide a longer narrative or working record; it is not the only user-facing result.
 
-A single small charge review can stay in the response plus its evidence/checks. Follow an explicitly requested output format. Avoid producing empty files merely to fill the set. Source PDFs and extraction text are working evidence, not default shareable exports. Creating a private dashboard does not authorize uploading its financial or mailbox data to hosting.
+A single-charge audit keeps the three web sections scoped to that charge/service. Follow an explicitly requested alternative output format. Avoid producing empty files merely to fill the set. Source PDFs and extraction text are working evidence, not default shareable exports. Creating a private dashboard does not authorize uploading its financial or mailbox data to hosting.
 
 ## Visual document
 
-Read [dashboard-contract.md](dashboard-contract.md) for the renderer schema and validation boundary. Give the user a scan-friendly service list with plan, current known status/date, price/cycle, next renewal, possible issue and next action. Each row opens the supporting timeline, unresolved facts, official action route and copyable draft when one exists. No-issue and resolved services remain discoverable; incoming reimbursements, deposits and one-time refunds appear separately.
+Read [dashboard-contract.md](dashboard-contract.md) for the renderer schema and validation boundary. The default audit page presents these three sections in order:
+
+| Section | Contents | Required distinctions |
+|---|---|---|
+| **Current services** | Every observed continuing service and every service explicitly named by the user; plan, current known state/date, price/cycle, next renewal, issue and next action | Normal/resolved services remain visible. Uncertain or historical evidence is labeled and does not become a claim of current activity. |
+| **Refund questions** | Specific, sourced concerns about possible overcharges, duplicate payments, unused paid periods or a refund still being traced | For each item show the reason, amount under review, eligibility state, missing evidence, proposed action and draft when appropriate. Unknown amount stays unknown; an approved historical refund awaiting receipt stays distinct from a new refund opportunity. |
+| **Other issues** | Renewal choices, missing price details, benefit restoration, reimbursements, usage/dependencies and source gaps without a specific refund basis | These can be valuable actions without being counted as refundable money. An ordinary reimbursement payable to the user is not a refund of subscription spend. |
+
+Each item opens the supporting timeline, unresolved facts, official action route and copyable draft when one exists. A service remains in the first section when it also has a refund question or other issue. Include non-subscription refund cases in the refund section only when they have a specific sourced refund basis; other non-subscription cases go to other issues. Source type alone does not decide the issue group.
+
+Keep all three headings even when a section has no items, and state that no supported items were found. Do not promote missing cost data, ordinary benefits or unrelated reimbursement questions into refund opportunities to populate the page. A suspicious charge may be unverified; explaining that uncertainty is part of the refund question. The presence of a source does not itself establish refund entitlement.
 
 Make the coverage boundary visible near the list. Label an evidence-supported paid term or recent usage signal precisely; do not relabel every discovered merchant as a currently active subscription. Include a latest-state correction where new evidence changes an earlier finding, and retire any draft contradicted by that evidence. Preserve the original event in the timeline without presenting it as the current problem.
 
 Show only sourced fixed monthly prices in a per-currency monthly subtotal. Display variable usage, prepaid purchases, multi-month/annual equivalents and unknown prices separately. The renderer's computed subtotal is a subset, not the user's complete monthly spending. Historical invoice face values, settled payments, credits and refunds remain distinct quantities.
 
-Open the generated page locally and check the visible list against the source inventory, the counted monthly components, readable details, evidence links and copyable drafts. Keep source text escaped and external resources out of the document; do not embed raw email HTML, tracking pixels or private invoice access tokens. The default template uses Traditional Chinese; localize its interface when the user's requested language differs.
+Open the generated page locally and check all three sections against the source inventory and case classifications, including empty states, the counted monthly components, readable details, evidence links and copyable drafts. Priority affects emphasis, not whether a classified item is shown. Keep source text escaped and external resources out of the document; do not embed raw email HTML, tracking pixels or private invoice access tokens. The default template uses Traditional Chinese; localize its interface when the user's requested language differs.
 
 ## audit.md
 

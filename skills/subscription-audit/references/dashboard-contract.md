@@ -2,6 +2,16 @@
 
 Use this contract for `dashboard.json`, then render a private, self-contained `dashboard.html`. It is a presentation model derived from the sourced inventory and cases; it does not replace `facts.json`, `checks.json` or the outcome ledger.
 
+## Three-section presentation
+
+A full audit always shows these sections in order:
+
+1. **Current services:** every row from `subscriptions`, with uncertain/historical states labeled. User-named services remain visible even without a receipt.
+2. **Refund questions:** rows from either `subscriptions` or `other_cases` classified as `review_group: refund`. Each has a specific sourced reason, amount under review, eligibility state, missing evidence and next step/draft; inclusion does not mean a refund is guaranteed.
+3. **Other issues:** rows from either array classified as `review_group: other`, such as renewal decisions, unknown fees, benefits, reimbursements, usage/dependency checks and source gaps.
+
+Keep explicit empty states for empty sections. Do not use other issues to fill an empty refund section. Inventory visibility is independent of issue grouping: a service remains in the first section even when it also appears in a later section. `priority` can affect emphasis but must not hide classified issues.
+
 ## Render
 
 Resolve the script and input/output paths from the installed skill and task directory:
@@ -50,7 +60,9 @@ Both `subscriptions` and `other_cases` use the same display fields. Give every r
 | `cost` | object | Display and subtotal fields below |
 | `renewal` | string or null | Explicit date/type/basis; distinguish renewal, trial end, term end and inferred dates |
 | `needs_action` | boolean | Whether this row requires a user check or proposed action |
-| `priority` | boolean | Whether an actionable subscription should appear in the priority cards |
+| `review_group` | enum, optional | `refund`, `other` or `none`; determines the issue section as specified below |
+| `refund_review` | object | Required structured refund question when `review_group` is `refund` |
+| `priority` | boolean, optional | Emphasis/order hint only; does not decide whether a classified issue is displayed |
 | `issue` | object | `title`, `summary` and optional `detail` strings; an unknown or resolved finding is valid |
 | `action` | object | `summary`, `steps` array of strings, and optional official `url` and `link_label` |
 | `evidence` | array | Dated sources/time sequence with fields below |
@@ -65,6 +77,34 @@ The status codes express the basis for the view:
 - `historical`: the row is retained as past history and is not counted as a current paid service.
 
 Never encode unknown price or current state as zero or inactive. A disabled auto-renew setting is separate from the remaining prepaid service term. Where later evidence changes a finding, show the updated state and retain the earlier events in `evidence`; omit a draft that relies on the superseded state.
+
+### Review group and refund basis
+
+Use explicit `review_group` values in newly authored data:
+
+- `refund`: a specific refund-related concern supported by at least one source, including an unresolved possible overcharge, duplicate payment, attributed unused paid period, or existing refund awaiting receipt. Set `needs_action: true`, supply a nonempty `evidence` array and populate `refund_review` below. A receipt alone does not prove the concern or eligibility; explain what it supports and what remains unverified.
+- `other`: an actionable renewal, unknown fee, missing benefit, reimbursement, usage/dependency issue or data gap without a specific refund question.
+- `none`: no current issue to put in either issue section. The service still remains in the inventory, including normal or resolved entries.
+
+For older inputs without `review_group`, the effective group is `other` when `needs_action` is true, otherwise `none`. For `other_cases`, missing `needs_action` defaults to true; for subscription rows it does not. Use explicit booleans when authoring new data. These defaults never infer a refund opportunity.
+
+`refund_review` contains:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `reason` | nonempty string | Specific concern and its evidence basis; distinguish source facts, inference and user-reported non-use |
+| `amount_label` | nonempty string | Amount/currency and what it represents, or explicit unknown; not a promised recovery amount |
+| `eligibility` | enum | `unverified`, `policy_supported`, `goodwill` or `refund_pending` |
+| `missing_evidence` | array of strings, optional | Facts needed to resolve the concern, establish eligibility or verify receipt |
+
+Interpret the eligibility states as follows:
+
+- `unverified`: the concern merits review but entitlement, payment or another necessary fact is unresolved.
+- `policy_supported`: cited applicable terms and evidence support a request; state any remaining conditions and do not guarantee acceptance.
+- `goodwill`: request an exception without asserting entitlement, using a credible source-backed or clearly attributed explanation.
+- `refund_pending`: trace an existing refund decision/processing event; distinguish merchant status from actual receipt and do not count it as newly recovered by this audit.
+
+Use the row's `action` and `drafts` for the next step and conditional request. Explain missing facts in `missing_evidence` even when the amount is known. Ordinary incoming reimbursements and benefit activation belong in other issues unless a separate, specific refund of a user-paid charge is supported. If one service has separate refund and other issues, keep the canonical service in `subscriptions` and represent the distinct additional case with its own stable ID in `other_cases`; retain the service/case linkage in JSON and avoid counting the same concern twice.
 
 ### Cost object
 
@@ -102,9 +142,11 @@ The renderer replaces any supplied `computed` value with:
 - `observed_count`: rows with status `observed`.
 - `uncertain_count`: rows with status `uncertain` or `user_reported`.
 - `action_count`: subscription rows with truthy `needs_action`; non-subscription cases are excluded.
+- `refund_count`: rows classified as `refund` across `subscriptions` and `other_cases`; this is a count of review questions, not approved refunds.
+- `other_issue_count`: rows classified as `other` across both arrays.
 - `known_monthly`: per-currency totals from explicitly opted-in fixed monthly rows.
 - `monthly_includes`: names of the counted rows, shown alongside the subtotal.
 
-The JSON input does not need a `computed` field. Rendering checks subscription structure, unique nonempty IDs across services and other cases, and the counted amount constraints; it does not validate every display field, source freshness, truthful classification or refund eligibility. Those remain evidence-review responsibilities.
+The JSON input does not need a `computed` field. Rendering checks subscription structure, unique nonempty IDs across services and other cases, the counted amount constraints and review-group values. Refund rows must be actionable, contain evidence and have valid required `refund_review` fields. These structural checks do not validate every display field, source freshness, truthful classification or refund eligibility. Those remain evidence-review responsibilities.
 
-Before delivery, compare the page with the canonical inventory: user-named services are present, latest events supersede obsolete findings, fixed monthly components are the intended subset, non-subscription receipts are separate, and unknowns remain visible. Check representative details and drafts in the rendered data, evidence destinations and that the document has no automatic remote-resource loads. Follow the host's verification rules for browser interaction testing. Deliver the local web document first, with JSON/CSV and supporting report links as needed.
+Before delivery, compare the page with the canonical inventory: all three sections are visible, empty sections say so, user-named services are present, latest events supersede obsolete findings, refund questions have a supported basis, fixed monthly components are the intended subset, non-subscription receipts are separate, and unknowns remain visible. Check representative details and drafts in the rendered data, evidence destinations and that the document has no automatic remote-resource loads. Follow the host's verification rules for browser interaction testing. Deliver the local web document first, with JSON/CSV and supporting report links as needed.

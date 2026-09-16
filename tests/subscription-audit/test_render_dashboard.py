@@ -59,6 +59,39 @@ class DashboardTests(unittest.TestCase):
         self.assertNotRegex(rendered, r'<(?:script|img|link)\b[^>]+(?:src|href)=')
         self.assertNotIn('__REPORT_DATA__', rendered)
 
+    def test_legacy_issues_never_become_refund_claims_automatically(self):
+        s = service(); s['needs_action'] = True
+        r = dashboard.prepare({'subscriptions': [s], 'other_cases': [{'id': 'reimbursement'}]})
+        self.assertEqual(r['computed']['refund_count'], 0)
+        self.assertEqual(r['computed']['other_issue_count'], 2)
+        self.assertEqual(s['review_group'], 'other')
+
+    def test_refund_review_does_not_change_spend_or_hide_service(self):
+        s = service(); s.update(needs_action=True, review_group='refund', refund_review={
+            'reason': 'Synthetic cancellation receipt predates this charged period.',
+            'amount_label': 'USD 9.90 under review; no refund received',
+            'eligibility': 'unverified', 'missing_evidence': ['Applicable terms'],
+        })
+        report = {'subscriptions': [s], 'other_cases': [{'id': 'claim', 'needs_action': True, 'review_group': 'other'}]}
+        r = dashboard.prepare(report)
+        self.assertEqual(r['computed']['refund_count'], 1)
+        self.assertEqual(r['computed']['other_issue_count'], 1)
+        self.assertEqual(r['computed']['service_count'], 1)
+        self.assertEqual(r['computed']['known_monthly'], {'USD': '9.90'})
+
+    def test_refund_requires_reason_evidence_and_valid_eligibility(self):
+        valid = {'reason': 'Synthetic billing discrepancy', 'amount_label': 'Unknown', 'eligibility': 'unverified'}
+        for field in ['reason', 'amount_label', 'eligibility', 'evidence']:
+            with self.subTest(field=field):
+                s = service(); s.update(needs_action=True, review_group='refund', refund_review=valid.copy())
+                if field == 'evidence': s['evidence'] = []
+                else: s['refund_review'].pop(field)
+                with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+
+    def test_resolved_case_cannot_remain_in_open_refund_queue(self):
+        s = service(); s.update(needs_action=False, review_group='refund')
+        with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+
 
 if __name__ == '__main__':
     unittest.main()
