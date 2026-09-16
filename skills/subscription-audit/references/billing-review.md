@@ -6,6 +6,8 @@ Apply this workflow across merchants. A merchant playbook adds detail; it is nev
 
 Prefer the user's selected mailbox invoices when an authorized mailbox read tool is available. Inspect the tool's actual search, pagination, message and attachment capabilities. Search the authorized folders and dates using billing concepts and language variants: invoice, receipt, payment, subscription, renewal, trial, refund, credit note, cancellation, 帳單, 發票, 收據, 扣款, 續訂, 退款. Include known merchant senders and related billing threads. Complete available result pages and report truncation or inaccessible attachments. Never represent a keyword search as exhaustive mailbox coverage.
 
+For multipart email, inspect whether the plain-text part contains meaningful content before dropping an HTML alternative. Empty text, “view in browser” and “HTML not supported” fallbacks require reading the HTML part; preserve its source identity and original content. Before reporting an unreadable message or missing amount, check available body alternatives and attachments.
+
 If no date range was specified for a mailbox-wide request, propose/use a stated last-13-month window within the user's authorized scope to include annual renewals; follow a user request for all history if supported. Local file reviews cover the supplied documents. A missing mailbox connection does not prevent file-based work: request selected exports while reviewing available evidence. Do not silently substitute samples or claim a mailbox scan.
 
 Classify documents before arithmetic:
@@ -22,6 +24,10 @@ Classify documents before arithmetic:
 Normalize invoices into `facts.json`. Keep other evidence in `cases.json` or a sourced case note using the facts contract. A receipt can supplement the same canonical invoice; if it establishes only a payment, keep it as payment evidence. Standalone credits and quotes are not new payable invoices. Use `other` for a line kind that has no dedicated enum, preserving its printed label and explanation. Use `recurring: false` and `cycle: one_time` for a confirmed one-time purchase; omit subscription data when none exists.
 
 Match merchant, actual seller, payment processor, account, invoice, transaction, billing period and currency. The merchant of record or app store may own the refund channel. Preserve separate accounts and currencies. Stable local aliases reduce exposure in reports; keep original references privately for a draft when needed.
+
+Keep trial end, paid service start, first billing date, invoice issue date and payment date distinct. If a notice's prose and table disagree, retain both dated statements as conflicting evidence instead of selecting one silently. Request the ledger from the earliest plausible paid-service date so a later first billing date does not hide an earlier charge period.
+
+Track separate promised benefits within a merchant's history: a free service period, replacement coupon and later credit grant may have different redemption status or expiry. Link a replacement to its earlier promise when supported; do not assume that a newer grant fulfilled every earlier benefit or count replacements twice.
 
 ## 2. Check every relevant opportunity
 
@@ -59,6 +65,8 @@ Use official merchant or payment-channel sources to verify the live contact rout
 ## 4. Prioritize and prepare the right request
 
 For each case, record the amount under review, supported request amount if known, currency, evidence strength, policy/deadline source, user's preference, service impact and next evidence/action. Put documented impending deadlines and strongly evidenced material discrepancies first. Use user priorities when present. Unknown eligibility or amount remains unknown; no speculative probability-weighted recovery headline.
+
+For a follow-up after a promised response window, show the start event, timezone and counting assumption. Unless the source says otherwise, count business days starting the next business day, excluding weekends and applicable known holidays; follow up only after the last included day has ended. If receipt time or holiday rules are unknown, label the date provisional. Check for a reply before using a draft that says the window has elapsed.
 
 Produce a ready-to-send email draft or ready-to-paste in-app support request with the official destination. Include:
 
