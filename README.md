@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.6.0 / Stage 0**
+**Version: v0.6.1 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -141,6 +141,12 @@ python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.6.1
+
+- All services appear in a clear cost sheet with price evidence, billing basis, monthly equivalent and inclusion status.
+- Expandable notes retain cost uncertainties and evidence.
+- Requested Excel workbooks can be delivered privately and linked from the webpage after verification.
 
 ## v0.6.0
 

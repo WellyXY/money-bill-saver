@@ -35,6 +35,7 @@ The template uses embedded CSS/JavaScript and system or self-contained embedded 
 | `as_of` | string | Audit date, preferably ISO date; not a claim of live account access |
 | `status_boundary` | string | Visible distinction between evidence-supported status and unchecked account state |
 | `cost_boundary` | string | Visible limits of the fixed monthly subtotal |
+| `cost_sheet_file` | optional string | Local adjacent `.xlsx` file created and verified for this report. Use a simple filename such as `subscription-cost-sheet.xlsx`; omit when no workbook exists. |
 | `monthly_cost` | object, optional for legacy inputs | Sourced monthly baseline, period normalization and unresolved cost gaps, as specified below; required for newly authored manage/both audits |
 | `subscriptions` | array | All observed continuing services in scope, plus user-named services with missing evidence |
 | `other_cases` | array | Reimbursements, deposits, one-time refunds and other non-subscription cases |
@@ -217,3 +218,9 @@ The renderer replaces any supplied `computed` value with:
 The JSON input does not need a `computed` field. Rendering checks subscription structure, unique nonempty IDs across services and other cases, the counted amount constraints and review-group values. Refund rows must be actionable, contain evidence and have valid required `refund_review` fields. These structural checks do not validate every display field, source freshness, truthful classification or refund eligibility. Those remain evidence-review responsibilities.
 
 Before delivery, compare the page with the canonical inventory: all three sections are visible, empty sections say so, user-named services are present, latest events supersede obsolete findings, refund questions have a supported basis, fixed monthly components and the normalized baseline have the intended distinct bases, non-subscription receipts are separate, and unknowns remain visible. Check baseline arithmetic, covered terms and current account evidence; do not present the estimate as actual cash payments. Check representative details and drafts in the rendered data, evidence destinations and that the document has no automatic remote-resource loads. Follow the host's verification rules for browser interaction testing. Deliver the local web document first, with JSON/CSV and supporting report links as needed.
+
+### Cost sheet presentation
+
+The monthly summary shows every service in a cost table: price evidence, billing basis, monthly equivalent, inclusion/coverage, and notes or evidence gaps. Only `computed.monthly_baseline_items` supply counted equivalents; other rows display Unknown. Keep detailed notes available without turning the scan view into long paragraphs. On mobile, preserve readable columns with an accessible horizontal scroll region.
+
+When requested, create a matching private workbook using the host's spreadsheet tools. Keep the original amount, currency and covered months beside the formula-derived equivalent; separate cash charges, historical top-ups, waivers and unknowns. Set `cost_sheet_file` only after the workbook has been saved and checked beside the HTML. The template permits simple `.xlsx` filenames without protocols or directories. Deliver the workbook together with the HTML to preserve its download link. Neither file belongs in a public repository.
