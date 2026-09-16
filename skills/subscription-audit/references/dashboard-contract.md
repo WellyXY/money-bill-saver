@@ -60,7 +60,8 @@ Both `subscriptions` and `other_cases` use the same display fields. Give every r
 | `status_label` | string | Precise user-facing state, such as a covered paid period or status awaiting confirmation |
 | `status_note` | string | Evidence date, state basis and remaining account-state uncertainty |
 | `cost` | object | Display and subtotal fields below |
-| `renewal` | string or null | Explicit date/type/basis; distinguish renewal, trial end, term end and inferred dates |
+| `billing_dates` | object | Required in newly authored service rows: separate last invoice, last charge and next renewal events as below |
+| `renewal` | string or null | Optional explanatory context; never parsed to invent a structured billing date |
 | `needs_action` | boolean | Whether this row requires a user check or proposed action |
 | `review_group` | enum, optional | `refund`, `other` or `none`; determines the issue section as specified below |
 | `refund_review` | object | Required structured refund question when `review_group` is `refund` |
@@ -79,6 +80,29 @@ The status codes express the basis for the view:
 - `historical`: the row is retained as past history and is not counted as a current paid service.
 
 Never encode unknown price or current state as zero or inactive. A disabled auto-renew setting is separate from the remaining prepaid service term. Where later evidence changes a finding, show the updated state and retain the earlier events in `evidence`; omit a draft that relies on the superseded state.
+
+### Three visible billing dates
+
+Every service row shows **Last invoice**, **Last charge**, and **Next renewal** within Known status, on desktop and mobile. Include `billing_dates` with keys `last_invoice`, `last_charge`, `next_renewal`. Missing legacy fields render as Unknown without inference.
+
+Each event contains:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `date` | ISO string or null | `YYYY-MM-DD` when only a day is supported; use a timezone-qualified ISO timestamp only when the event time is in the source |
+| `status` | enum | `confirmed` or `unknown`; next renewal also permits `estimated` or `not_scheduled` |
+| `note` | nonempty string | Event meaning, source precision and remaining uncertainty |
+| `sources` | array of strings | Stable source IDs/locators supporting the date or explicitly unscheduled renewal |
+| `qualifier` | optional string | Short sourced clarification visible beside the date, such as `Manual renewal; auto-renew off` |
+| `related_date` | optional object | `{date, label}` for a distinct source-backed event such as term end, expiry, notice or due date; not a substitute for the requested event |
+
+Confirmed and estimated events require a valid date and nonempty source references. Unknown and not-scheduled events have `date: null`; not-scheduled also requires source evidence. A related date needs an explicit label and the event's source references. Estimates apply only to the next renewal and are visibly marked `Est.`. Never infer a successful payment from an issued invoice, a failed payment attempt or an unpaid-fee waiver.
+
+Last invoice means the issue date of the latest observed invoice, not its due date or the arrival time of an email. Last charge means the latest evidenced successful payment, not the most recent invoice or attempted debit. An invoice can be newer than the last successful charge. If the latest known document lacks its event date, state Unknown and optionally identify a previous explicitly dated event as related context. A receipt/order notification alone must not supply an exact charge timestamp unless it states that timestamp or payment date.
+
+Next renewal is a dated renewal/next-charge event supported by the account or merchant notice. Distinguish it from term end, expiry, trial conversion and a historical inferred billing cadence. If auto-renew is off but a manual renewal date is given, retain the date with a visible manual-renewal `qualifier` and a full explanatory note. If no upcoming renewal is scheduled, use not_scheduled only with evidence; absence of a renewal notice is merely unknown. Do not invent a clock time or timezone for day-only sources.
+
+The details view retains full notes and source references for each event. CSV exports keep separate date, status and note columns; do not combine the three dates into a generic last-activity field.
 
 ### Review group and refund basis
 

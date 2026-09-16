@@ -46,7 +46,35 @@
         "Recent usage."
       ],
       "drafts": [],
-      "review_group": "none"
+      "review_group": "none",
+      "billing_dates": {
+        "last_invoice": {
+          "date": null,
+          "status": "unknown",
+          "note": "No event date established by the synthetic records.",
+          "sources": []
+        },
+        "last_charge": {
+          "date": "2030-01-01",
+          "status": "confirmed",
+          "note": "Synthetic payment receipt states payment on January 1; the clock time is not provided.",
+          "sources": [
+            "SYN-001"
+          ]
+        },
+        "next_renewal": {
+          "date": null,
+          "status": "unknown",
+          "note": "The supplied date is a service-period end, not a verified renewal.",
+          "sources": [
+            "SYN-001"
+          ],
+          "related_date": {
+            "date": "2030-02-01",
+            "label": "Service period ends"
+          }
+        }
+      }
     },
     {
       "id": "sample-cloud",
@@ -90,7 +118,29 @@
           "text": "Hello Support,\nPlease provide my payment, credit and usage ledger, along with my current balance and automatic top-up settings. Thank you."
         }
       ],
-      "review_group": "other"
+      "review_group": "other",
+      "billing_dates": {
+        "last_invoice": {
+          "date": null,
+          "status": "unknown",
+          "note": "No event date established by the synthetic records.",
+          "sources": []
+        },
+        "last_charge": {
+          "date": "2029-12-15",
+          "status": "confirmed",
+          "note": "Synthetic prepaid receipt states payment on December 15; no invoice issue date is supplied.",
+          "sources": [
+            "SYN-002"
+          ]
+        },
+        "next_renewal": {
+          "date": null,
+          "status": "unknown",
+          "note": "No event date established by the synthetic records.",
+          "sources": []
+        }
+      }
     },
     {
       "id": "sample-assistant",
@@ -121,7 +171,27 @@
           "note": "A discovery lead only, not proof of payment."
         }
       ],
-      "review_group": "other"
+      "review_group": "other",
+      "billing_dates": {
+        "last_invoice": {
+          "date": null,
+          "status": "unknown",
+          "note": "No event date established by the synthetic records.",
+          "sources": []
+        },
+        "last_charge": {
+          "date": null,
+          "status": "unknown",
+          "note": "No event date established by the synthetic records.",
+          "sources": []
+        },
+        "next_renewal": {
+          "date": null,
+          "status": "unknown",
+          "note": "No event date established by the synthetic records.",
+          "sources": []
+        }
+      }
     }
   ],
   "other_cases": [

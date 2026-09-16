@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.4.0 / Stage 0**
+**Version: v0.5.0 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -12,7 +12,7 @@ Every audit webpage contains three sections in this order:
 
 | Section | Contents |
 |---|---|
-| **Current services** | Every observed or user-named service, its latest supported status, plan, cost basis and renewal information. Missing evidence stays visible. |
+| **Current services** | Every observed or user-named service, its latest supported status, plan, cost basis, last invoice issue date, last successful charge date and next renewal. Missing evidence stays visible. |
 | **Refund questions** | Specific concerns about overcharges, duplicate payments, unused paid periods, goodwill requests or pending refunds. Each includes its basis, amount under review, eligibility state, missing evidence and next step. |
 | **Other issues** | Renewal decisions, unknown prices, usage checks, missing benefits, reimbursements, dependencies and source gaps. |
 
@@ -140,6 +140,13 @@ python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.5.0
+
+- Known status now always shows Last invoice, Last charge and Next renewal on desktop and mobile.
+- Each date retains its source, precision and status; unknown dates remain explicit.
+- Renewal dates are separate from term end, expiry, manual-renewal requirements and failed payment attempts.
+- Existing inputs receive unknown dates rather than dates guessed from free text.
 
 ## v0.4.0
 

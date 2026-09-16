@@ -3,9 +3,56 @@
 import argparse
 import base64
 from collections import Counter
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 import json
 from pathlib import Path
+import re
+
+
+def validate_date(value):
+    if not isinstance(value, str):
+        raise ValueError('Billing dates must be ISO dates or timezone-qualified timestamps')
+    if re.fullmatch(r'\d{4}-\d{2}-\d{2}', value):
+        date.fromisoformat(value)
+    elif re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})', value):
+        datetime.fromisoformat(value.replace('Z', '+00:00'))
+    else:
+        raise ValueError('Use an ISO date, or a timestamp with an explicit timezone')
+
+
+def prepare_billing_dates(service):
+    dates = service.setdefault('billing_dates', {})
+    if not isinstance(dates, dict):
+        raise ValueError(f"{service['id']}: billing_dates must be an object")
+    for field in ('last_invoice', 'last_charge', 'next_renewal'):
+        event = dates.setdefault(field, {'date': None, 'status': 'unknown', 'note': 'Not established in the reviewed sources.', 'sources': []})
+        if not isinstance(event, dict):
+            raise ValueError(f"{service['id']}: {field} must be an object")
+        allowed = {'confirmed', 'unknown'} if field != 'next_renewal' else {'confirmed', 'estimated', 'unknown', 'not_scheduled'}
+        state = event.get('status')
+        if state not in allowed:
+            raise ValueError(f"{service['id']}: invalid {field} status")
+        sources = event.get('sources', [])
+        if not isinstance(sources, list) or not all(isinstance(s, str) and s.strip() for s in sources):
+            raise ValueError(f"{service['id']}: {field} sources must be nonempty strings")
+        if not isinstance(event.get('note'), str) or not event['note'].strip():
+            raise ValueError(f"{service['id']}: {field} needs an evidence note")
+        if state in {'confirmed', 'estimated'}:
+            validate_date(event.get('date'))
+            if not sources:
+                raise ValueError(f"{service['id']}: dated billing events require source references")
+        elif event.get('date') is not None:
+            raise ValueError(f"{service['id']}: unknown or unscheduled events cannot have an event date")
+        if state == 'not_scheduled' and not sources:
+            raise ValueError(f"{service['id']}: unscheduled renewal needs source evidence")
+        if 'qualifier' in event and (not isinstance(event['qualifier'], str) or not event['qualifier'].strip() or not sources):
+            raise ValueError(f"{service['id']}: date qualifiers require text and source evidence")
+        related = event.get('related_date')
+        if related is not None:
+            if not isinstance(related, dict) or not isinstance(related.get('label'), str) or not related['label'].strip() or not sources:
+                raise ValueError(f"{service['id']}: related dates require a label and source evidence")
+            validate_date(related.get('date'))
 
 
 def prepare(report):
@@ -28,6 +75,7 @@ def prepare(report):
             raise ValueError(f'{sid}: require a service name')
         if service.get('status') not in {'observed', 'uncertain', 'user_reported', 'historical'}:
             raise ValueError(f'{sid}: invalid status')
+        prepare_billing_dates(service)
         cost = service.get('cost', {})
         if not isinstance(cost, dict):
             raise ValueError(f'{sid}: cost must be an object')

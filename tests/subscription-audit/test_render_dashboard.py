@@ -95,6 +95,35 @@ class DashboardTests(unittest.TestCase):
         s = service(); s.update(needs_action=False, review_group='refund')
         with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
 
+    def test_missing_billing_dates_stay_unknown_even_with_renewal_text(self):
+        s = service(); s['renewal'] = 'Term ends 2030-02-01'
+        dashboard.prepare({'subscriptions': [s]})
+        self.assertEqual(set(s['billing_dates']), {'last_invoice', 'last_charge', 'next_renewal'})
+        self.assertTrue(all(e['date'] is None and e['status'] == 'unknown' for e in s['billing_dates'].values()))
+
+    def test_invoice_charge_and_term_end_remain_distinct(self):
+        s = service(); s['billing_dates'] = {
+            'last_invoice': {'date': '2030-01-08', 'status': 'confirmed', 'note': 'Invoice issue date', 'sources': ['invoice-1']},
+            'last_charge': {'date': '2030-01-12T16:30:00-08:00', 'status': 'confirmed', 'note': 'Successful receipt timestamp', 'sources': ['receipt-1']},
+            'next_renewal': {'date': None, 'status': 'unknown', 'note': 'Only a period end is known', 'sources': ['invoice-1'], 'related_date': {'date': '2030-02-08', 'label': 'Period ends'}},
+        }
+        dashboard.prepare({'subscriptions': [s]})
+        self.assertEqual(s['billing_dates']['last_invoice']['date'], '2030-01-08')
+        self.assertEqual(s['billing_dates']['last_charge']['date'], '2030-01-12T16:30:00-08:00')
+        self.assertIsNone(s['billing_dates']['next_renewal']['date'])
+
+    def test_dated_events_need_sources_and_valid_precision(self):
+        for value, sources in [('2030-02-30', ['x']), ('2030-01-01T12:00:00', ['x']), ('2030-01-01', [])]:
+            with self.subTest(value=value, sources=sources):
+                s = service(); s['billing_dates'] = {'last_charge': {'date': value, 'status': 'confirmed', 'note': 'Receipt', 'sources': sources}}
+                with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+
+    def test_only_renewals_may_be_estimated_and_unknown_cannot_hide_a_date(self):
+        for field, state, value in [('last_charge', 'estimated', '2030-01-01'), ('last_invoice', 'unknown', '2030-01-01'), ('next_renewal', 'not_scheduled', '2030-02-01')]:
+            with self.subTest(field=field, state=state):
+                s = service(); s['billing_dates'] = {field: {'date': value, 'status': state, 'note': 'Test record', 'sources': ['x']}}
+                with self.assertRaises(ValueError): dashboard.prepare({'subscriptions': [s]})
+
 
 if __name__ == '__main__':
     unittest.main()
