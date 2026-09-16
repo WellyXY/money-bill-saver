@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI 帳單與訂閱審核"
+  short_description: "跨商家查多收、未使用與續訂，準備退款及取回權益的草稿"
+  default_prompt: "使用 $subscription-audit 審核我提供或授權存取的各家帳單，找出多收、重複扣款、未使用、續訂及未取得的權益，核實退款機會並準備商家適用的處理草稿。"

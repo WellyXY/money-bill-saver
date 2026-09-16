@@ -1,0 +1,66 @@
+{
+  "schema_version": "0.1",
+  "scope": {
+    "description": "SYNTHETIC DEMO ONLY: six merchants and bill types; no live accounts",
+    "start": "2026-07-01",
+    "end": "2026-09-01",
+    "limitations": ["No proof of payment", "No live activity or dependency evidence", "Illustrative amounts and tax only"]
+  },
+  "sources": [
+    {"id": "demo-railway", "type": "other", "locator": "synthetic fixture: Railway invoice illustration"},
+    {"id": "demo-notes", "type": "other", "locator": "synthetic fixture: Example Notes invoice illustration"},
+    {"id": "demo-fitness", "type": "other", "locator": "synthetic fixture: annual membership invoice"},
+    {"id": "demo-streaming", "type": "other", "locator": "synthetic fixture: paid renewal following a trial"},
+    {"id": "demo-mobile", "type": "other", "locator": "synthetic fixture: metered telecom bill"},
+    {"id": "demo-repair", "type": "other", "locator": "synthetic fixture: one-time repair invoice"}
+  ],
+  "invoices": [
+    {
+      "record_id": "observation-1", "vendor": "railway", "account_ref": "demo-account-a", "invoice_ref": "demo-invoice-a", "subscription_ref": "demo-subscription-a", "issued_on": "2026-08-01", "currency": "USD", "amount_due": "32.40", "line_items_complete": true, "source_refs": ["demo-railway"],
+      "line_items": [
+        {"label": "Hobby", "kind": "base", "amount": "5.00", "period": {"start": "2026-08-01", "end": "2026-09-01"}},
+        {"label": "Resources", "kind": "usage_gross", "amount": "30.00", "period": {"start": "2026-07-01", "end": "2026-08-01"}},
+        {"label": "Included usage", "kind": "included_usage", "amount": "-5.00"},
+        {"label": "Illustrative tax", "kind": "tax", "amount": "2.40"}
+      ],
+      "subscription": {"plan": "Hobby", "cycle": "monthly", "recurring": true, "renews_on": null, "owner": null, "activity": "unknown", "dependency": "unknown"}
+    },
+    {
+      "record_id": "observation-2", "vendor": "example-notes", "account_ref": "demo-account-b", "invoice_ref": "demo-invoice-b", "subscription_ref": "demo-subscription-b", "issued_on": "2026-08-01", "currency": "EUR", "amount_due": "12.00", "line_items_complete": true, "source_refs": ["demo-notes"],
+      "line_items": [{"label": "Monthly plan", "kind": "base", "amount": "12.00", "period": {"start": "2026-08-01", "end": "2026-09-01"}}],
+      "subscription": {"plan": "Personal", "cycle": "monthly", "recurring": true, "renews_on": null, "owner": null, "activity": "unknown", "dependency": "unknown"}
+    },
+    {
+      "record_id": "observation-3", "vendor": "example-fitness", "account_ref": "demo-account-c", "invoice_ref": "demo-invoice-c", "subscription_ref": "demo-subscription-c", "issued_on": "2026-08-01", "currency": "JPY", "amount_due": "10800", "line_items_complete": true, "source_refs": ["demo-fitness"],
+      "line_items": [
+        {"label": "Annual membership", "kind": "base", "amount": "12000", "period": {"start": "2026-08-01", "end": "2027-08-01"}},
+        {"label": "Annual promotion", "kind": "discount", "amount": "-1200"}
+      ],
+      "subscription": {"cycle": "annual", "recurring": true, "renews_on": null, "activity": "unknown", "dependency": "unknown"}
+    },
+    {
+      "record_id": "observation-4", "vendor": "example-streaming", "account_ref": "demo-account-d", "invoice_ref": "demo-invoice-d", "subscription_ref": "demo-subscription-d", "issued_on": "2026-08-01", "currency": "USD", "amount_due": "14.99", "line_items_complete": true, "source_refs": ["demo-streaming"],
+      "line_items": [{"label": "Monthly renewal following trial", "kind": "base", "amount": "14.99", "period": {"start": "2026-08-01", "end": "2026-09-01"}}],
+      "subscription": {"cycle": "monthly", "recurring": true, "renews_on": null, "activity": "unknown", "dependency": "unknown"}
+    },
+    {
+      "record_id": "observation-5", "vendor": "example-mobile", "account_ref": "demo-account-e", "invoice_ref": "demo-invoice-e", "subscription_ref": "demo-subscription-e", "issued_on": "2026-08-01", "currency": "BHD", "amount_due": "3.740", "line_items_complete": true, "source_refs": ["demo-mobile"],
+      "line_items": [
+        {"label": "Access fee", "kind": "base", "amount": "2.500"},
+        {"label": "Metered calls", "kind": "usage_gross", "amount": "0.875"},
+        {"label": "Roaming", "kind": "other", "amount": "0.025"},
+        {"label": "Illustrative tax", "kind": "tax", "amount": "0.340"}
+      ],
+      "subscription": {"cycle": "usage", "recurring": true, "activity": "unknown", "dependency": "unknown"}
+    },
+    {
+      "record_id": "observation-6", "vendor": "example-repair-shop", "account_ref": "demo-account-f", "invoice_ref": "demo-invoice-f", "subscription_ref": null, "issued_on": "2026-08-01", "currency": "TWD", "amount_due": "1890", "line_items_complete": true, "source_refs": ["demo-repair"],
+      "line_items": [
+        {"label": "Part", "kind": "other", "amount": "1200"},
+        {"label": "Labour", "kind": "other", "amount": "600"},
+        {"label": "Illustrative tax", "kind": "tax", "amount": "90"}
+      ],
+      "subscription": {"cycle": "one_time", "recurring": false}
+    }
+  ]
+}
