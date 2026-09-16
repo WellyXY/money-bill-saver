@@ -1,0 +1,133 @@
+{
+  "as_of": "2030-01-15",
+  "title": "合成範例：訂閱與待處理項目",
+  "intro": "這是教學用合成資料，不是任何人的真實帳單。",
+  "status_boundary": "僅展示三個虛構服務，沒有連接信箱或銀行。",
+  "subscriptions": [
+    {
+      "id": "sample-notes",
+      "name": "Example Notes",
+      "initials": "N",
+      "category": "筆記工具",
+      "plan": "Monthly",
+      "status": "observed",
+      "status_label": "付費期間涵蓋查閱日",
+      "status_note": "合成收據顯示帳期為 1/1–2/1。",
+      "cost": {
+        "label": "USD 12 / 月",
+        "note": "固定月繳；使用情況未知。",
+        "kind": "fixed_monthly",
+        "amount": "12.00",
+        "currency": "USD",
+        "include_monthly": true
+      },
+      "renewal": "下期日期待核實。",
+      "needs_action": false,
+      "priority": false,
+      "issue": {
+        "title": "未發現具體計費問題",
+        "summary": "目前缺少使用紀錄。"
+      },
+      "action": {
+        "summary": "確認是否仍需要，再決定下次續訂。",
+        "steps": [
+          "查看用量。",
+          "確認續訂設定。"
+        ]
+      },
+      "evidence": [
+        {
+          "date": "2030-01-01",
+          "label": "合成收據 SYN-001",
+          "note": "此來源僅用於示範。"
+        }
+      ],
+      "unknowns": [
+        "近期使用情況。"
+      ],
+      "drafts": []
+    },
+    {
+      "id": "sample-cloud",
+      "name": "Example Cloud",
+      "initials": "C",
+      "category": "運算服務",
+      "status": "uncertain",
+      "status_label": "儲值已付／目前用量未知",
+      "status_note": "合成收據記載一次 USD 50 儲值。",
+      "cost": {
+        "label": "USD 50 / 次儲值",
+        "note": "不是月費或可退款額。",
+        "kind": "prepaid",
+        "amount": "50.00",
+        "currency": "USD",
+        "include_monthly": false
+      },
+      "needs_action": true,
+      "priority": true,
+      "issue": {
+        "title": "目前餘額與自動儲值未明",
+        "summary": "需要帳戶流水。"
+      },
+      "action": {
+        "summary": "取得點數、用量與自動儲值明細。",
+        "steps": [
+          "查看剩餘點數。",
+          "核對運行中資源與自動儲值設定。"
+        ]
+      },
+      "evidence": [
+        {
+          "date": "2029-12-15",
+          "label": "合成收據 SYN-002"
+        }
+      ],
+      "drafts": [
+        {
+          "title": "帳務明細詢問",
+          "condition": "教學示例；請填入真實帳號與交易資訊後再審閱。",
+          "text": "Hello Support,\nPlease provide my payment, credit and usage ledger, along with my current balance and automatic top-up settings. Thank you."
+        }
+      ]
+    },
+    {
+      "id": "sample-assistant",
+      "name": "Example Assistant",
+      "initials": "A",
+      "category": "使用者提及的服務",
+      "status": "user_reported",
+      "status_label": "缺少付款證據",
+      "status_note": "使用者要求納入，尚未找到收據。",
+      "cost": {
+        "label": "金額待確認",
+        "note": "未知不等於零。",
+        "kind": "unknown",
+        "include_monthly": false
+      },
+      "needs_action": true,
+      "priority": false,
+      "issue": {
+        "title": "帳號方案待核實"
+      },
+      "action": {
+        "summary": "查看帳戶或商店訂閱，補齊帳單與續訂日。"
+      },
+      "evidence": [
+        {
+          "date": "2030-01-15",
+          "label": "合成使用者陳述",
+          "note": "僅作發現線索，非付費證據。"
+        }
+      ]
+    }
+  ],
+  "other_cases": [],
+  "appendix": [],
+  "coverage": {
+    "summary": "合成範例：3 項服務；已知固定月費只包含 Example Notes。",
+    "notes": [
+      "沒有讀取真實帳號、信件、交易或網站。"
+    ]
+  },
+  "footer_note": "合成資料 · 可離線檢視"
+}

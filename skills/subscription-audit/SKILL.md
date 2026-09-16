@@ -5,7 +5,7 @@ description: Review bills, invoices, receipts and subscriptions across merchants
 
 # Subscription Audit
 
-Stage 0: review every merchant and bill type present in the user's selected evidence, then produce explainable findings and actionable drafts. Cover fixed subscriptions, usage bills, annual memberships, trials that became paid, app-store purchases, telecom/utilities and one-time purchases. Record document or evidence limitations per case. Produce local reports and draft text with the correct merchant support route. No product account, product backend or dedicated mailbox connector is required.
+Stage 0: review every merchant and bill type present in the user's selected evidence, then produce explainable findings and actionable drafts. For a broad audit, lead with the full observed service inventory and each service's current known status, possible issues and next action. Cover fixed subscriptions, usage bills, annual memberships, trials that became paid, app-store purchases, telecom/utilities and one-time purchases. Deliver a private visual web document with supporting data and local drafts. No product account, product backend or dedicated mailbox connector is required.
 
 ## Start with the user's task
 
@@ -17,12 +17,12 @@ Briefly report available sources, covered accounts/periods and missing signals. 
 
 ## 1. Collect and normalize evidence
 
-Read [billing-review.md](references/billing-review.md) for the common collection, charge, usage and refund workflow. Apply it to every selected merchant, including merchants without a dedicated playbook. During a broad review, keep an entry for each discovered bill/service, even when no action or insufficient evidence is the finding.
+Read [billing-review.md](references/billing-review.md) for the common collection, charge, usage and refund workflow. Apply it to every selected merchant, including merchants without a dedicated playbook. During a broad review, keep an entry for each discovered bill/service, even when no action or insufficient evidence is the finding. Every service explicitly named by the user must remain visible even if no receipt is found; mark the missing evidence and investigate within the authorized scope.
 
 Read [facts-contract.md](references/facts-contract.md) before constructing facts or tracking outcomes. Use stable local references for accounts, invoices and subscriptions, with source locations/pages supporting every material claim.
 
 - **PDF:** run `scripts/extract_pdf.py` on explicit PDF paths with `--output-dir` set to a fresh private working directory. It writes one text file per input and a batch manifest with page records; stdout contains status only. Use the host's Python/runtime with `pypdf` or Poppler `pdftotext`. Read the selected output pages. Empty/scanned or broken layout pages need visual inspection or OCR in an authorized environment; mark unresolved fields unknown. The helper extracts text, not invoice facts.
-- **Email:** use an existing, authorized read tool to search the specified billing scope; record source references and attachment identity. There is no bundled Gmail connection. Linked invoice files are additional evidence, not proof of a payment. Fetch private links only within existing authorization.
+- **Email:** use an existing, authorized read tool to search billing documents and service lifecycle signals: welcome, plan, trial, cancellation, renewal and later payment/status updates. Follow an apparent failure through subsequent events before drafting a remedy. Record source references and attachment identity. There is no bundled Gmail connection. Linked invoice files are additional evidence, not proof of a payment. Fetch private links only within existing authorization.
 - **Manual usage/context:** accept exports, screenshots, plan confirmations, cancellation receipts and user statements. Record which observations are user-reported and which have service evidence. Preserve their dates and account/project identity.
 
 Create `facts.json` using the contract. A packaged [example-facts.json](assets/example-facts.json) illustrates the format with **synthetic** data; use it only for demos or verification. Scope coverage and unknowns are required even when the output is an empty inventory.
@@ -31,7 +31,7 @@ Keep source documents intact. Use a task-owned working directory for extraction 
 
 ## 2. Check arithmetic and identity
 
-Run `scripts/check_facts.py --input facts.json --output checks.json` using absolute paths resolved from this skill and the working directory. Both helpers expose `--help`; output replacement requires an explicit `--force`. Inspect every validation error and flagged invoice before writing a financial conclusion.
+Run `scripts/check_facts.py --input facts.json --output checks.json` using absolute paths resolved from this skill and the working directory. The helpers expose `--help`; output replacement requires an explicit `--force`. Inspect every validation error and flagged invoice before writing a financial conclusion.
 
 The checker uses decimal arithmetic and confirmed invoice identities. It checks transcription consistency; it does not validate vendor metering, prove that an invoice was paid, or establish refund eligibility. Explain residuals with taxes, discounts, credits, carry-forward and billing periods. Preserve `incomplete` even if the known amounts happen to sum to the total. Equal amounts are insufficient to establish duplicate payments.
 
@@ -55,13 +55,15 @@ Assess an unused-service refund separately from a billing error: establish the c
 
 ### Manage
 
-Build an inventory of subscriptions **observed in the stated sources and dates**, grouped only by confirmed service/account/subscription identity. Show currency, observed billed cost, billing cycle, known plan price, next renewal, owner, activity and dependency, with unknowns explicit. Keep variable usage and annualized estimates separate from actual invoice totals.
+Build an inventory of subscriptions and continuing services **observed in the stated sources and dates**, grouped only by confirmed service/account/subscription identity. Show the latest supported state and its date, plan, currency, cost basis, cycle, renewal, usage/dependency gaps, issue and concrete next action for every row. Preserve normal and already-resolved services alongside open problems. An old receipt, product announcement or missing cancellation email does not establish an active paid subscription today. Later confirmed events can supersede an earlier failure, cancellation or plan while the source timeline remains visible.
+
+Keep fixed monthly subtotals, variable usage, prepaid balances, annual/multi-month equivalents and historical invoice totals separate. Unknown prices are unknown, not zero or public list prices. Auto-renew being disabled does not erase a service whose prepaid term is still valid. Show reimbursements, incoming transfers, one-time purchases and other non-subscription bills separately; they do not count as subscription spend. A source-limited inventory must not claim to be the user's complete set of currently active subscriptions.
 
 Recommend retain, investigate, downgrade or cancel using the user's intent plus activity/dependency evidence. Missing events and absent ownership do not establish disuse. Low traffic does not establish that a database, background job or production dependency can be removed. If safe exit cannot be established, name the specific check needed. Functional overlap alone does not establish interchangeable tools.
 
 ## 4. Prepare the action and verification
 
-Read [deliverables.md](references/deliverables.md) for the report, draft and outcome formats. Produce the parts required by the mode; keep both queues when both were requested.
+Read [deliverables.md](references/deliverables.md) for the inventory, draft and outcome formats. A full audit defaults to self-contained `dashboard.html` plus `dashboard.json`, with JSON/CSV evidence exports retained. Read [dashboard-contract.md](references/dashboard-contract.md) when constructing the visual document and render it with `scripts/render_dashboard.py`. Produce the parts required by the mode; keep both queues when both were requested. A narrow charge question can use a concise response instead of the full dashboard.
 
 Stage 0 ends with local draft text, attachment checklist, official destination and manual next step. Respect earlier explicit authorization if the user separately asks for an external action: inspect the live tool capability and exact target, execute only within that scope, and preserve its receipt. This skill itself does not grant permission to send mail, create remote drafts, change plans/caps, schedule monitoring or submit disputes. Avoid repeated confirmation when the user already approved the specific action.
 
@@ -71,4 +73,4 @@ Track follow-up dates as data unless scheduling was requested. Use the local out
 
 ## Completion
 
-The selected scope has a source-backed inventory or charge conclusion; arithmetic/conflicts and data gaps are visible; each recommendation has a concrete evidence requirement or next step; any draft matches the merchant's channel; and any claimed completed action has a supporting receipt. An honest empty result or explained bill is a valid audit outcome. End in the user's language with the key findings, relevant artifact links, unresolved evidence and proposed action; no invented recovery, account status or background monitoring.
+The selected scope has a source-backed inventory or charge conclusion; arithmetic/conflicts and data gaps are visible; each recommendation has a concrete evidence requirement or next step; any draft matches the merchant's channel; and any claimed completed action has a supporting receipt. For a full audit, preview the visual document and verify its service data, details, evidence links and draft controls using the host's permitted checks before delivery. An honest empty result or explained bill is a valid audit outcome. End in the user's language with the key findings, the visual document first, relevant supporting artifacts, unresolved evidence and proposed action; no invented recovery, account status or background monitoring.

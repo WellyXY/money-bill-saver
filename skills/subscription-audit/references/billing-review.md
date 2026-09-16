@@ -4,7 +4,9 @@ Apply this workflow across merchants. A merchant playbook adds detail; it is nev
 
 ## 1. Find and classify billing evidence
 
-Prefer the user's selected mailbox invoices when an authorized mailbox read tool is available. Inspect the tool's actual search, pagination, message and attachment capabilities. Search the authorized folders and dates using billing concepts and language variants: invoice, receipt, payment, subscription, renewal, trial, refund, credit note, cancellation, 帳單, 發票, 收據, 扣款, 續訂, 退款. Include known merchant senders and related billing threads. Complete available result pages and report truncation or inaccessible attachments. Never represent a keyword search as exhaustive mailbox coverage.
+Prefer the user's selected mailbox invoices when an authorized mailbox read tool is available. Inspect the tool's actual search, pagination, message and attachment capabilities. Search the authorized folders and dates using billing concepts and language variants: invoice, receipt, payment, subscription, renewal, trial, refund, credit note, cancellation, 帳單, 發票, 收據, 扣款, 續訂, 退款. Also search service lifecycle signals such as welcome, plan confirmation/change, trial completion and expense/payment status updates: these may contain none of the invoice keywords. Include known merchant senders and related billing threads. Complete available result pages and report truncation or inaccessible attachments. Never represent a keyword search as exhaustive mailbox coverage.
+
+Keep every service named by the user in the inventory even when the search finds no receipt. Search its brand, seller and plausible purchase channels within the authorized scope; record an unresolved evidence gap instead of a zero price or an absent service. A marketing announcement can be an account/plan lead, but it does not prove payment or the current account state.
 
 For multipart email, inspect whether the plain-text part contains meaningful content before dropping an HTML alternative. Empty text, “view in browser” and “HTML not supported” fallbacks require reading the HTML part; preserve its source identity and original content. Before reporting an unreadable message or missing amount, check available body alternatives and attachments.
 
@@ -20,14 +22,19 @@ Classify documents before arithmetic:
 | Failed payment / authorization hold | Payment attempt/status | Calling it an additional settled payment |
 | Credit note / refund confirmation | Adjustment or refund decision to match to the original charge | Counting a note and later cash movement as two recoveries |
 | Cancellation / plan / trial confirmation | Agreed plan, timing and effective state | Assuming it applies to every account or stops already incurred usage |
+| Reimbursement / incoming transfer status | Money payable to the user and its processing state | Treating it as subscription spend or a refund of a user-paid subscription |
 
 Normalize invoices into `facts.json`. Keep other evidence in `cases.json` or a sourced case note using the facts contract. A receipt can supplement the same canonical invoice; if it establishes only a payment, keep it as payment evidence. Standalone credits and quotes are not new payable invoices. Use `other` for a line kind that has no dedicated enum, preserving its printed label and explanation. Use `recurring: false` and `cycle: one_time` for a confirmed one-time purchase; omit subscription data when none exists.
 
 Match merchant, actual seller, payment processor, account, invoice, transaction, billing period and currency. The merchant of record or app store may own the refund channel. Preserve separate accounts and currencies. Stable local aliases reduce exposure in reports; keep original references privately for a draft when needed.
 
+For each apparent failure, cancellation or missing benefit, search later messages from the same merchant and relevant thread before deciding the current state. Match the account and transaction/claim identity, not just the amount or merchant. If later evidence shows payment, reissue, reinstatement or a plan change for the same event, update the latest-state finding and retire contradicted drafts while preserving the dated timeline. A matching application date without a unique claim ID can support a labeled timeline inference, not certain identity. Merchant-marked paid and bank-verified receipt remain separate states.
+
 Keep trial end, paid service start, first billing date, invoice issue date and payment date distinct. If a notice's prose and table disagree, retain both dated statements as conflicting evidence instead of selecting one silently. Request the ledger from the earliest plausible paid-service date so a later first billing date does not hide an earlier charge period.
 
 Track separate promised benefits within a merchant's history: a free service period, replacement coupon and later credit grant may have different redemption status or expiry. Link a replacement to its earlier promise when supported; do not assume that a newer grant fulfilled every earlier benefit or count replacements twice.
+
+Build the current service list from dated state evidence: a paid period covering the audit date, a recent usage signal, an announced renewal or a currently valid entitlement. Describe the specific basis and what has not been checked. Historical receipts alone leave current status unresolved; auto-renew disabled can coexist with a valid prepaid term. Keep historical payment totals, current plan price and remaining credit balance in separate fields.
 
 ## 2. Check every relevant opportunity
 
