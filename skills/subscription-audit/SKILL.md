@@ -61,6 +61,8 @@ Build an inventory of subscriptions and continuing services **observed in the st
 
 Keep fixed monthly subtotals, variable usage, prepaid balances, annual/multi-month equivalents and historical invoice totals separate. Unknown prices are unknown, not zero or public list prices. Auto-renew being disabled does not erase a service whose prepaid term is still valid. Show reimbursements, incoming transfers, one-time purchases and other non-subscription bills separately; they do not count as subscription spend. A source-limited inventory must not claim to be the user's complete set of currently active subscriptions.
 
+Include a **Known monthly baseline** with an as-of date, every counted component and unresolved cost gaps. Use `monthly_cost` in [dashboard-contract.md](references/dashboard-contract.md): account-specific current monthly prices or plan bases plus monthly equivalents of prepaid terms still in force. Normalize the original amount by its covered months, sum before rounding, and keep currencies separate. Count each service once; disclose excluded usage, add-ons, unknown plans, fees and coverage gaps. A waived bill or credit can change this month's payment without changing a plan's tariff. The baseline is an estimate of known current costs, not actual cash spending or a guaranteed minimum. Answer requests for real monthly spend by stating this boundary and what remains unknown; actual calendar-month cash totals require separately matched successful payments and received refunds for that period. Never infer current usage costs from an old bill or double-count prepaid credits and their consumption.
+
 Recommend retain, investigate, downgrade or cancel using the user's intent plus activity/dependency evidence. Missing events and absent ownership do not establish disuse. Low traffic does not establish that a database, background job or production dependency can be removed. If safe exit cannot be established, name the specific check needed. Functional overlap alone does not establish interchangeable tools.
 
 ## 4. Prepare the action and verification
@@ -69,7 +71,7 @@ Recommend retain, investigate, downgrade or cancel using the user's intent plus 
 
 Read [deliverables.md](references/deliverables.md) for the inventory, draft and outcome formats. Audit output defaults to self-contained `dashboard.html` plus `dashboard.json`, with JSON/CSV evidence exports retained. Keep these three sections visible in order:
 
-1. **Current services:** every observed or user-named service, including normal/resolved entries and clearly labeled uncertain current states; show plan, cost basis, last invoice, last successful charge, next renewal and next action.
+1. **Current services:** every observed or user-named service, including normal/resolved entries and clearly labeled uncertain current states; show plan, cost basis, last invoice, last successful charge, next renewal and next action. Manage/both audits also show the known monthly baseline, component calculation and unresolved costs.
 2. **Refund questions:** evidence-backed concerns about overcharges, duplicate payments, unused paid periods or pending refunds. Show the reason, amount under review, eligibility state, missing evidence and next action/draft. A question is not a promise of refund eligibility.
 3. **Other issues:** renewal decisions, unknown costs, benefits, reimbursements, usage/dependencies and data gaps that do not yet support a specific refund question.
 

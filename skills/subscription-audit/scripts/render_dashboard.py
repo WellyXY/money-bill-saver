@@ -5,6 +5,7 @@ import base64
 from collections import Counter
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 import json
 from pathlib import Path
 import re
@@ -55,6 +56,73 @@ def prepare_billing_dates(service):
             validate_date(related.get('date'))
 
 
+def prepare_monthly_cost(report, services):
+    """Normalize sourced current costs without turning them into cash charges."""
+    if 'monthly_cost' not in report:
+        return {}, []
+    summary = report['monthly_cost']
+    if not isinstance(summary, dict):
+        raise ValueError('monthly_cost must be an object')
+    validate_date(summary.get('as_of'))
+    if not isinstance(summary.get('note'), str) or not summary['note'].strip():
+        raise ValueError('monthly_cost needs a coverage note')
+    items = summary.get('items')
+    unknowns = summary.get('unknowns')
+    if not isinstance(items, list) or not isinstance(unknowns, list):
+        raise ValueError('monthly_cost items and unknowns must be arrays')
+    by_id = {service['id']: service for service in services}
+    included = set()
+    amounts = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError('Every monthly cost item must be an object')
+        sid = item.get('service_id')
+        if not isinstance(sid, str) or sid not in by_id or sid in included:
+            raise ValueError('Monthly cost items need unique known service references')
+        included.add(sid)
+        if by_id[sid]['status'] != 'observed':
+            raise ValueError(f'{sid}: monthly baseline requires observed current service evidence')
+        value = item.get('amount')
+        if not isinstance(value, str) or not re.fullmatch(r'\d+(?:\.\d+)?', value, flags=re.ASCII):
+            raise ValueError(f'{sid}: monthly cost amount must be a nonnegative decimal string')
+        amount = Decimal(value)
+        if not amount.is_finite() or amount < 0:
+            raise ValueError(f'{sid}: invalid monthly cost amount')
+        currency = item.get('currency')
+        if not isinstance(currency, str) or not re.fullmatch(r'[A-Z]{3}', currency):
+            raise ValueError(f'{sid}: monthly cost requires a three-letter currency')
+        months = item.get('months')
+        if isinstance(months, bool) or not isinstance(months, int) or months <= 0:
+            raise ValueError(f'{sid}: monthly cost months must be a positive integer')
+        if not isinstance(item.get('basis'), str) or not item['basis'].strip():
+            raise ValueError(f'{sid}: monthly cost requires its pricing/period basis')
+        sources = item.get('sources')
+        if not isinstance(sources, list) or not sources or not all(isinstance(source, str) and source.strip() for source in sources):
+            raise ValueError(f'{sid}: monthly cost requires source references')
+        amounts.append((item, amount))
+    for gap in unknowns:
+        if not isinstance(gap, dict) or not isinstance(gap.get('service_id'), str) or gap['service_id'] not in by_id:
+            raise ValueError('Monthly cost unknowns require known service references')
+        if not isinstance(gap.get('note'), str) or not gap['note'].strip():
+            raise ValueError('Monthly cost unknowns require a specific evidence gap')
+    totals = {}
+    normalized = []
+    def rounded_money(value):
+        # Exact nonnegative ROUND_HALF_UP, including recurring fractions at a half cent.
+        cents, remainder = divmod(value.numerator * 100, value.denominator)
+        cents += remainder * 2 >= value.denominator
+        return f'{cents // 100}.{cents % 100:02d}'
+
+    # Sum exact, unrounded monthly equivalents; rounding each item first can change totals.
+    for item, amount in amounts:
+        monthly = Fraction(amount) / item['months']
+        currency = item['currency']
+        totals[currency] = totals.get(currency, Fraction(0)) + monthly
+        normalized.append({**item, 'monthly_amount': rounded_money(monthly)})
+    totals = {currency: rounded_money(amount) for currency, amount in sorted(totals.items())}
+    return totals, normalized
+
+
 def prepare(report):
     if not isinstance(report, dict):
         raise ValueError('The report must be an object')
@@ -97,6 +165,7 @@ def prepare(report):
                 raise ValueError(f'{sid}: invalid amount')
             totals[currency] = totals.get(currency, Decimal('0')) + amount
             included.append(service['name'])
+    monthly_baseline, monthly_baseline_items = prepare_monthly_cost(report, services)
     other_cases = report.get('other_cases', [])
     if not isinstance(other_cases, list):
         raise ValueError('other_cases must be an array')
@@ -139,6 +208,8 @@ def prepare(report):
         'other_issue_count': groups['other'],
         'known_monthly': {c: format(v, '.2f') for c, v in sorted(totals.items())},
         'monthly_includes': included,
+        'monthly_baseline': monthly_baseline,
+        'monthly_baseline_items': monthly_baseline_items,
     }
     return report
 

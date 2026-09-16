@@ -35,6 +35,7 @@ The template uses embedded CSS/JavaScript and system or self-contained embedded 
 | `as_of` | string | Audit date, preferably ISO date; not a claim of live account access |
 | `status_boundary` | string | Visible distinction between evidence-supported status and unchecked account state |
 | `cost_boundary` | string | Visible limits of the fixed monthly subtotal |
+| `monthly_cost` | object, optional for legacy inputs | Sourced monthly baseline, period normalization and unresolved cost gaps, as specified below; required for newly authored manage/both audits |
 | `subscriptions` | array | All observed continuing services in scope, plus user-named services with missing evidence |
 | `other_cases` | array | Reimbursements, deposits, one-time refunds and other non-subscription cases |
 | `appendix` | array | Remaining bill/source groups with `name`, `category` and `note` strings |
@@ -147,6 +148,44 @@ Set `include_monthly: true` only for an `observed` row with `kind: fixed_monthly
 
 Keep variable usage, prepaid top-ups, annual/multi-month payments, amortized equivalents, waived historical invoices and unknown amounts outside this subtotal. A fixed base component of a usage plan must not make the whole plan look like a fixed monthly total. Display its basis separately unless the report explicitly models that component without double-counting. Do not sum different currencies or add a points balance to money. Label any equivalent as an estimate and retain the original payment period.
 
+### Known monthly baseline
+
+For a newly authored manage/both audit, include `monthly_cost` and show a **Known monthly baseline** with its components, as-of date and unresolved gaps. This answers the supported part of current cost. It is a normalized cost estimate, not the user's complete spending or the cash charged this calendar month. Keep the fixed monthly subtotal distinct; it is a different subset and must not be added to this baseline.
+
+```json
+{
+  "monthly_cost": {
+    "as_of": "2030-01-01",
+    "items": [
+      {
+        "service_id": "sample-service",
+        "amount": "120.00",
+        "currency": "USD",
+        "months": 12,
+        "basis": "Account-specific prepaid annual term still covers the audit date; USD 120.00 divided by 12 months.",
+        "sources": ["synthetic-invoice-1"]
+      }
+    ],
+    "unknowns": [
+      {"service_id": "sample-service", "note": "Optional usage charges for the current month are not available."}
+    ],
+    "note": "Known current cost equivalents only. Payment timing and unresolved costs are separate."
+  }
+}
+```
+
+The example is synthetic. `service_id` must identify a subscription row. `as_of` is a valid ISO date (or a timezone-qualified timestamp where justified), and `note` is a nonempty coverage boundary. Both `items` and `unknowns` are arrays, including when empty.
+
+Each item requires a unique service reference, a nonnegative plain decimal-string `amount`, an uppercase three-letter `currency`, positive integer `months`, a nonempty `basis`, and nonempty `sources` containing stable evidence references. Include only rows with `status: observed` and account-specific current price/term evidence. Historical, uncertain and user-reported rows cannot contribute to the calculation. Being observed alone does not establish a price; evidence review must establish the amount, covered term and applicable account.
+
+Use one item per service to prevent duplicate counting. For a monthly tariff or fixed base, `months` is 1; disclose excluded variable usage. For a current prepaid, annual or multi-month term, retain its full source amount and number of covered months, with taxes/fees described in `basis`. A plan base is a current tariff equivalent, not proof that a cash debit is due this month; explain waivers, credits or prepaid coverage that alter actual payment. Never count a credit top-up and its later usage again as separate recurring costs, extrapolate one usage bill into a fixed fee, or replace an unknown account price with a public list price or zero.
+
+Each `unknowns` entry has a known `service_id` and a nonempty `note` stating the unresolved cost or status evidence. A service may appear in both arrays when its fixed base is known but its usage or add-ons are not. Unknown prices stay outside all monetary sums and remain visible. An empty list is not proof that the audit found every account or charge; retain source coverage separately.
+
+The renderer computes `amount / months`, sums the unrounded equivalents by currency, and rounds each currency total to two decimals using half-up rounding. It also computes a two-decimal display amount for each component; displayed rounded components may differ by a cent from the correctly rounded total. Supplied totals are never trusted. Missing legacy `monthly_cost` produces empty baseline results, without guessing from invoice history or the fixed monthly subtotal.
+
+For actual monthly cash spending, separately reconcile successful payments and received refunds within an explicit calendar period, currencies and source coverage. An invoice amount, renewal estimate, prepaid equivalent or waived fee is not a settled transaction. Do not label the known monthly baseline as actual spend or a guaranteed minimum.
+
 ### Evidence and drafts
 
 Each evidence entry uses:
@@ -172,7 +211,9 @@ The renderer replaces any supplied `computed` value with:
 - `other_issue_count`: rows classified as `other` across both arrays.
 - `known_monthly`: per-currency totals from explicitly opted-in fixed monthly rows.
 - `monthly_includes`: names of the counted rows, shown alongside the subtotal.
+- `monthly_baseline`: per-currency, two-decimal totals normalized from validated `monthly_cost.items`; empty when absent.
+- `monthly_baseline_items`: input-order item objects retaining `service_id`, `amount`, `currency`, `months`, `basis` and `sources`, with computed `monthly_amount` added for display.
 
 The JSON input does not need a `computed` field. Rendering checks subscription structure, unique nonempty IDs across services and other cases, the counted amount constraints and review-group values. Refund rows must be actionable, contain evidence and have valid required `refund_review` fields. These structural checks do not validate every display field, source freshness, truthful classification or refund eligibility. Those remain evidence-review responsibilities.
 
-Before delivery, compare the page with the canonical inventory: all three sections are visible, empty sections say so, user-named services are present, latest events supersede obsolete findings, refund questions have a supported basis, fixed monthly components are the intended subset, non-subscription receipts are separate, and unknowns remain visible. Check representative details and drafts in the rendered data, evidence destinations and that the document has no automatic remote-resource loads. Follow the host's verification rules for browser interaction testing. Deliver the local web document first, with JSON/CSV and supporting report links as needed.
+Before delivery, compare the page with the canonical inventory: all three sections are visible, empty sections say so, user-named services are present, latest events supersede obsolete findings, refund questions have a supported basis, fixed monthly components and the normalized baseline have the intended distinct bases, non-subscription receipts are separate, and unknowns remain visible. Check baseline arithmetic, covered terms and current account evidence; do not present the estimate as actual cash payments. Check representative details and drafts in the rendered data, evidence destinations and that the document has no automatic remote-resource loads. Follow the host's verification rules for browser interaction testing. Deliver the local web document first, with JSON/CSV and supporting report links as needed.

@@ -244,5 +244,31 @@
       "No real accounts, messages, transactions or websites were accessed."
     ]
   },
-  "footer_note": "Synthetic data. Available offline."
+  "footer_note": "Synthetic data. Available offline.",
+  "monthly_cost": {
+    "as_of": "2030-01-15",
+    "items": [
+      {
+        "service_id": "sample-notes",
+        "amount": "12.00",
+        "currency": "USD",
+        "months": 1,
+        "basis": "Synthetic fixed monthly plan from the sample receipt.",
+        "sources": [
+          "SYN-001"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "service_id": "sample-cloud",
+        "note": "Top-ups do not establish a current monthly usage cost."
+      },
+      {
+        "service_id": "sample-assistant",
+        "note": "The account price and current billing period are unknown."
+      }
+    ],
+    "note": "Synthetic demonstration only. A partial monthly baseline is separate from actual cash payments and excludes unknown account costs."
+  }
 }

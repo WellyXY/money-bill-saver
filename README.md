@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.5.0 / Stage 0**
+**Version: v0.6.0 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -18,7 +18,7 @@ Every audit webpage contains three sections in this order:
 
 Empty sections remain visible. A refund question does not mean a refund has been approved or is guaranteed. Normal and resolved services remain in the inventory.
 
-The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
+The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
 
 ## Review coverage
 
@@ -114,6 +114,7 @@ All three tools support `--help`; replacing existing output requires `--force`. 
 - Unknown prices remain unknown, not zero or public list prices.
 - Fixed monthly prices, variable usage, prepaid balances, annual or multi-month equivalents and historical invoice totals are separate quantities.
 - Fixed monthly subtotals include only source-supported, explicitly selected monthly prices and are separated by currency. They do not represent complete spending.
+- A known monthly baseline separately normalizes current account-specific prices, plan bases and valid prepaid terms. Its component calculation and cost gaps remain visible; it is not actual cash paid this month, complete spend or a guaranteed minimum.
 - A reconciled invoice proves arithmetic consistency, not payment, appropriate metering or refund eligibility.
 - Failed payment notices, duplicate documents and pending authorizations do not establish duplicate settled charges.
 - An old receipt, a product announcement or absence of a cancellation email does not establish a currently active paid subscription.
@@ -140,6 +141,12 @@ python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.6.0
+
+- Monthly cost summaries show a sourced known baseline, counted components and unresolved costs.
+- Current prices and prepaid terms normalize by their covered months, with exact arithmetic, separate currencies and half-up total rounding.
+- Unknown prices stay outside the sums; actual cash payments, waivers, credits, usage and the fixed monthly subtotal retain separate meanings.
 
 ## v0.5.0
 
