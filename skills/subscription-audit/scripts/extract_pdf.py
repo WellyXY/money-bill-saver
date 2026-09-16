@@ -6,6 +6,7 @@ This helper does not identify invoice fields, redact PII or perform OCR.
 """
 
 import argparse
+from collections import Counter
 import contextlib
 import hashlib
 import io
@@ -17,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 
 class ExtractionError(ValueError):
@@ -109,8 +111,28 @@ def extract_files(paths, output_dir, force=False):
         chunks = []
         for i, value in enumerate(pages, 1):
             stripped = value.strip()
-            page_rows.append({"page": i, "characters": len(stripped), "needs_visual_review": len(stripped) < 30})
-            chunks.append(f"--- PAGE {i} ---\n{value.rstrip()}\n")
+            controls = Counter(
+                ord(char) for char in value
+                if unicodedata.category(char) == "Cc" and char not in "\t\n\r\f"
+            )
+            review_reasons = []
+            if len(stripped) < 30:
+                review_reasons.append("insufficient_text")
+            if controls:
+                review_reasons.append("unexpected_control_characters")
+            page_rows.append({
+                "page": i,
+                "characters": len(stripped),
+                "unexpected_control_character_count": sum(controls.values()),
+                "unexpected_control_characters": [
+                    {"codepoint": f"U+{codepoint:04X}", "count": count}
+                    for codepoint, count in sorted(controls.items())
+                ],
+                "needs_visual_review": bool(review_reasons),
+                "review_reasons": review_reasons,
+            })
+            # Preserve suspicious characters, including trailing ones, for review.
+            chunks.append(f"--- PAGE {i} ---\n{value}\n")
         documents.append({
             "source": str(path),
             "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),

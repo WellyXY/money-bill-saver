@@ -52,8 +52,41 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(doc["source_sha256"], before)
         self.assertEqual(hashlib.sha256(src.read_bytes()).hexdigest(), before)
         self.assertFalse(doc["pages"][0]["needs_visual_review"])
+        self.assertEqual(doc["pages"][0]["unexpected_control_character_count"], 0)
+        self.assertEqual(doc["pages"][0]["unexpected_control_characters"], [])
+        self.assertEqual(doc["pages"][0]["review_reasons"], [])
         if os.name == "posix":
             self.assertEqual((out / "manifest.json").stat().st_mode & 0o777, 0o600)
+
+    def test_control_characters_flag_review_without_rewriting_extracted_text(self):
+        src = self.root / "synthetic-controls.pdf"
+        invoice(src)
+        bad = "SYNTHETIC INVOICE ID DEMO\x000001; total 32.40\x00\x07\x7f\x85\x1f"
+        normal = "SYNTHETIC INVOICE ID DEMO-0002\tamount 5.00\r\nordinary layout\f"
+        out = self.root / "out"
+        with patch.object(module, "extract_pages", return_value=([bad, normal], "synthetic", False)):
+            result = module.extract_files([src], out)
+
+        saved = json.loads((out / "manifest.json").read_text())
+        self.assertEqual(saved, result)
+        document = saved["documents"][0]
+        pages = document["pages"]
+        self.assertGreater(pages[0]["characters"], 30)
+        self.assertTrue(pages[0]["needs_visual_review"])
+        self.assertEqual(pages[0]["review_reasons"], ["unexpected_control_characters"])
+        self.assertEqual(pages[0]["unexpected_control_character_count"], 6)
+        self.assertEqual(pages[0]["unexpected_control_characters"], [
+            {"codepoint": "U+0000", "count": 2},
+            {"codepoint": "U+0007", "count": 1},
+            {"codepoint": "U+001F", "count": 1},
+            {"codepoint": "U+007F", "count": 1},
+            {"codepoint": "U+0085", "count": 1},
+        ])
+        self.assertFalse(pages[1]["needs_visual_review"])
+        self.assertEqual(pages[1]["unexpected_control_character_count"], 0)
+        self.assertEqual(pages[1]["unexpected_control_characters"], [])
+        expected = f"--- PAGE 1 ---\n{bad}\n\n--- PAGE 2 ---\n{normal}\n"
+        self.assertEqual(Path(document["text_file"]).read_bytes(), expected.encode("utf-8"))
 
     def test_same_basename_different_sources_and_repeated_path(self):
         for d in ["one", "two"]:
