@@ -1,46 +1,10 @@
 # Money Bill Saver
 
-[![skills.sh](https://skills.sh/b/WellyXY/money-bill-saver)](https://skills.sh/WellyXY/money-bill-saver)
+A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Know what you pay for, spot charges worth questioning, and draft refund requests—from your bills and subscription emails.**
+**Version: v0.8.2 / Stage 0**
 
-[50-second illustrated quickstart](docs/quickstart.md) · [Interactive demo](https://wellyxy.github.io/money-bill-saver/) · [Open example report](https://wellyxy.github.io/money-bill-saver/example-report.html) · [MIT license](LICENSE)
-
-## Install in one command
-
-Run in your terminal (requires Node.js and Git):
-
-```sh
-npx --yes skills add WellyXY/money-bill-saver --skill money-bill-saver --agent codex --global --yes
-```
-
-[![Money Bill Saver report: service inventory, monthly costs and billing questions, illustrated with synthetic data](docs/assets/report-preview.png)](https://wellyxy.github.io/money-bill-saver/example-report.html)
-
-*Example report with fictional services and amounts. Your audit produces a private webpage.*
-
-**You get:** your service list and monthly cost sheet → refund questions with evidence → next steps and support drafts. Refunds are not guaranteed; requests are sent only with your authorization.
-
-## Try it in Codex
-
-Then open a new Codex task and try it:
-
-```text
-Use $money-bill-saver to render and explain the bundled synthetic example report. Do not access my mailbox or personal files.
-```
-
-Prefer installing from chat? Paste this request into Codex:
-
-```text
-$skill-installer Install the money-bill-saver skill from https://github.com/WellyXY/money-bill-saver/tree/main/skills/money-bill-saver
-```
-
-Open a new task after installation; restart Codex if the skill does not appear. The [illustrated quickstart](docs/quickstart.md) walks through your first report.
-
-For your own review, attach the bills you choose or specify an authorized mailbox and date range. A mailbox review needs a mail connector available in your host; this skill does not bundle one. Installing it does not grant account access.
-
-**Version: v0.8.2 / Stage 0 · [MIT](LICENSE)**
-
-Reports, interface copy, exports and repository documentation default to **English** unless another language is requested. The [interactive demo](https://wellyxy.github.io/money-bill-saver/) uses synthetic data and can be paused, replayed or navigated with a keyboard.
+The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
 ## What the audit delivers
 
@@ -95,11 +59,11 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 
 ## Completion checks before the first report
 
-Mailbox reviews default to the last **six calendar months**, unless you request another period. Start with billing channels, then use targeted sender/account/thread checks for cancellations, refunds and plan or payment changes. Read the selected query pages and relevant messages/attachments. Automatic brand-wide searches are off; unresolved questions stay visible for a separate follow-up. Annual plans without a notice in the selected period may be absent.
+Before concluding that invoices, payments or later account changes are missing, run a merchant/seller/provider search without billing keyword restrictions. Read localized billing and lifecycle messages, every available result page, full message bodies and relevant attachments. Later cancellation, plan changes, low-balance notices and resource removal can change an earlier conclusion.
 
 New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
 
-The executable gate checks scoped search coverage, selected pagination, unreviewed records, attachment coverage, review findings and stale bindings. Focused billing/lifecycle searches satisfy coverage; an unrestricted merchant pass is not required. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
+The executable gate checks collection closure, unreviewed records, attachment coverage, review findings and stale bindings. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
 
 ```sh
 python skills/money-bill-saver/scripts/check_audit.py \
@@ -113,16 +77,7 @@ An incomplete audit can still be rendered as a clearly labeled preliminary repor
 
 ## Install and use
 
-Use the [one-command installation above](#install-in-one-command) or the [Codex chat installer](#try-it-in-codex). For a local manual installation, copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into a [Codex user skill location](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills), such as `~/.agents/skills/`. Update an existing installation by replacing the same skill directory.
-
-For the optional Codex plugin package, add this repository as a marketplace source and install the preview plugin:
-
-```sh
-codex plugin marketplace add WellyXY/money-bill-saver
-codex plugin add money-bill-saver@money-bill-saver
-```
-
-This GitHub marketplace is a testing source. It is separate from the public ChatGPT and Codex Plugins Directory, which requires [submission and review](https://developers.openai.com/plugins/deploy/submission).
+Copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into your Codex skills directory, usually `~/.codex/skills/`. If `CODEX_HOME` is configured, use its `skills/` directory. Update an existing installation by replacing the same skill directory.
 
 Example request:
 
@@ -138,13 +93,13 @@ For a mailbox review, specify the account and date range and use an authorized m
 
 Installing the skill alone does not authorize mailbox scanning. A service tool or existing login does not establish access to its invoices, usage or cancellation features.
 
-## Context use and design guidance
+## Bundled design guidance
 
-`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with payment channels, app stores, card alerts and trial notices, then checks related account events through targeted queries or the relevant thread within the selected scope.
+Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
 
-Reports use the fixed template. Ordinary runs read the short [webpage preflight](skills/money-bill-saver/references/web-design.md) and only **Section 14: FINAL PRE-FLIGHT CHECK** of the bundled [design-taste-frontend guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check). Its landing-page and framework rules do not override financial evidence or trigger a redesign. The full guide remains available for an explicitly requested redesign.
+The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
 
-The bundled guide is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), retaining its [MIT notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). Original Money Bill Saver material is available under the repository's [MIT license](LICENSE).
+The page uses native CSS and self-contained assets. Light and dark themes, responsive layouts, readable financial data and accessible controls serve the audit. It does not become a conversion page, truncate the inventory to highlights, or require decorative generated imagery. Private bills and mailbox data are not used to generate decorative images.
 
 ## Local tools
 
@@ -180,8 +135,6 @@ Decode a saved raw email and its attachments (Gmail RAW JSON or `.eml`):
 python skills/money-bill-saver/scripts/extract_mime.py \
   /absolute/path/to/raw-message.json --output-dir work/mail --extract-pdf
 ```
-
-The MIME output preserves the original response, decoded attachments and readable derivatives with integrity bindings. Source entries start unread; review them before including their conclusions in an audit. Keep the output bundle together when moving it, and use an output directory separate from the input files. Complete saved tool results are supported; truncated previews must be retrieved again rather than treated as complete messages.
 
 Render the synthetic webpage example:
 
@@ -224,7 +177,7 @@ python -m unittest discover -s tests/money-bill-saver -p 'test_*.py'
 
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, raw MIME decoding (attachments, legacy charsets, encrypted or mislabeled PDFs, size limits), varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
-Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. MIME regressions cover truncated messages, inline invoice images, attached messages, HTML charset declarations, PDFs without file extensions, portable PDF manifests, and failed output replacement. Original responses and readable derivatives are checked for modification or omission. These tests verify the gate's behavior; they do not replace factual review of real documents.
+Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
 
@@ -233,7 +186,6 @@ Browser and visual checks are separate from these automated tests. Use the host'
 - `scripts/extract_mime.py` decodes saved raw messages into a full MIME payload, hashed attachments, HTML/CSV text (including Big5) and PDF page text, with suggested evidence entries.
 - The workflow now probes mail tools for a raw single-message format before declaring an attachment unreadable, and falls back to user uploads, connected folders or an authorized browser session.
 - The evidence contract documents how converted messages and part-ID attachments satisfy the completion gate.
-- Raw conversion preserves originals and binds the files used for review; inline images and attached messages remain in the evidence inventory. Truncated MIME is rejected, legacy HTML encoding warnings remain visible, PDF references survive moving the bundle, and failed replacements preserve previous output and source files.
 
 ## v0.8.1
 
@@ -276,7 +228,7 @@ Browser and visual checks are separate from these automated tests. Use the host'
 ## v0.4.0
 
 - English defaults for reports, interface text, exports, examples and repository documentation, with explicit language overrides.
-- Introduced a full portable copy of `design-taste-frontend`. Ordinary audits now read only its preflight section; see [Context use and design guidance](#context-use-and-design-guidance).
+- A full portable copy of `design-taste-frontend`, required reading for every audit webpage run.
 - Audit-specific design integration that preserves the complete financial inventory, three-section structure, private data and offline delivery.
 - Refined page presentation with theme, responsive-layout and interaction guidance while retaining the existing evidence and cost boundaries.
 

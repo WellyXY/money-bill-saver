@@ -26,118 +26,6 @@ def report_digest(prepared_report):
     return service_digest(substantive)
 
 
-def _bound_message_files(message, message_path, bundle_root, source_id):
-    """Validate and enumerate every file bound to a raw-derived MIME message.
-
-    Legacy full Gmail payloads have no extraction contract. Converted messages
-    must retain their original plus the complete, portable extraction inventory.
-    Both assessment and the review digest use this same validation.
-    """
-    if not isinstance(message, dict):
-        raise ValueError('Saved message must be an object')
-    if not any(key in message for key in ('source_format', 'raw_sha256', 'extraction')):
-        return {}
-    extraction = message.get('extraction')
-    if (not isinstance(extraction, dict) or extraction.get('schema_version') != '1'
-            or not isinstance(extraction.get('files'), list)):
-        raise ValueError('Raw-derived messages require extraction schema 1 and a complete files list')
-    source_format = message.get('source_format')
-    if source_format not in ('gmail_raw_json', 'rfc822'):
-        raise ValueError('Raw-derived message source_format is missing or invalid')
-    folder = message_path.parent
-    roles = {'original', 'body_text', 'attachment', 'attachment_text', 'pdf_manifest', 'pdf_artifact'}
-    entries, bound = {}, {}
-    for entry in extraction['files']:
-        if not isinstance(entry, dict) or entry.get('role') not in roles:
-            raise ValueError('Extraction files need a supported role')
-        name, digest = entry.get('file'), entry.get('sha256')
-        if (not _text(name) or Path(name).is_absolute() or '..' in Path(name).parts
-                or '\\' in name or Path(name).as_posix() != name):
-            raise ValueError('Extraction files require relative paths within the message folder, without ..')
-        if name in entries:
-            raise ValueError('Extraction files must not repeat a file')
-        if not isinstance(digest, str) or not re.fullmatch(r'[0-9a-f]{64}', digest):
-            raise ValueError('Extraction files require a SHA-256 hash')
-        target = (folder / name).resolve(strict=True)
-        if (not target.is_relative_to(folder) or not target.is_relative_to(bundle_root)
-                or not target.is_file() or target == message_path):
-            raise ValueError('Extraction file escapes the message folder or refers to message.json itself')
-        actual = hashlib.sha256(target.read_bytes()).hexdigest()
-        if actual != digest:
-            raise ValueError(f'Extraction file hash does not match: {name}')
-        entries[name] = entry
-        bound[(folder / name).relative_to(bundle_root).as_posix()] = actual
-    for role in ('original', 'body_text'):
-        if sum(entry['role'] == role for entry in entries.values()) != 1:
-            raise ValueError(f'Extraction requires exactly one {role} file')
-    # This directory is the converter's private per-message output. A missing
-    # inventory entry must not silently stop a saved attachment/text being bound.
-    actual_files = set()
-    for target in folder.rglob('*'):
-        resolved = target.resolve(strict=True)
-        if not resolved.is_relative_to(folder) or not resolved.is_relative_to(bundle_root):
-            raise ValueError('Extraction directory contains a symlink escape')
-        if target.is_symlink() and target.is_dir():
-            raise ValueError('Extraction directories must not contain directory symlinks')
-        if target.is_file() and target != message_path:
-            actual_files.add(target.relative_to(folder).as_posix())
-    if actual_files != set(entries):
-        raise ValueError('Extraction files list does not cover every saved message artifact')
-    original_name = next(name for name, entry in entries.items() if entry['role'] == 'original')
-    original = folder / original_name
-    original_data = original.read_bytes()
-    is_json = original_data.lstrip()[:1] in (b'{', b'[')
-    if is_json != (source_format == 'gmail_raw_json'):
-        raise ValueError('Original file does not match source_format')
-    spec = importlib.util.spec_from_file_location('audit_mime_extractor', Path(__file__).with_name('extract_mime.py'))
-    mime = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mime)
-    raw, metadata = mime.load_raw(original)
-    if message.get('raw_sha256') != hashlib.sha256(raw).hexdigest():
-        raise ValueError('Original MIME bytes do not match raw_sha256')
-    original_id = metadata.get('id')
-    if not _text(message.get('id')) or _message_id(message['id']) != _message_id(source_id):
-        raise ValueError('Extracted message ID does not match its source ID')
-    if original_id is not None and (not _text(original_id)
-            or _message_id(original_id) != _message_id(source_id)
-            or _message_id(original_id) != _message_id(message.get('id'))):
-        raise ValueError('Original message ID does not match the saved message and source IDs')
-
-    linked_files = set()
-
-    def check_parts(part):
-        if not isinstance(part, dict):
-            raise ValueError('Extracted MIME parts must be objects')
-        body = part.get('body') or {}
-        if not isinstance(body, dict):
-            raise ValueError('Extracted MIME part body must be an object')
-        for field, allowed in (('file', {'attachment'}),
-                               ('text_file', {'attachment_text', 'pdf_artifact'}),
-                               ('pdf_manifest_file', {'pdf_manifest'})):
-            name = body.get(field)
-            if name is not None and (not isinstance(name, str) or name not in entries
-                                     or entries[name]['role'] not in allowed):
-                raise ValueError(f'MIME {field} has no matching extraction file')
-            if name is not None:
-                if name in linked_files:
-                    raise ValueError('An extraction file is linked by more than one MIME part')
-                linked_files.add(name)
-        if body.get('file') and body.get('sha256') != entries[body['file']]['sha256']:
-            raise ValueError('MIME attachment hash does not match its extraction file')
-        if (body.get('sha256') or part.get('filename')
-                or body.get('attachment_id', body.get('attachmentId'))) and not body.get('file'):
-            raise ValueError('Extracted attachment has no saved extraction file')
-        for child in part.get('parts') or []:
-            check_parts(child)
-
-    check_parts(message.get('payload'))
-    required_links = {name for name, entry in entries.items()
-                      if entry['role'] in {'attachment', 'attachment_text', 'pdf_manifest'}}
-    if not required_links.issubset(linked_files):
-        raise ValueError('Saved attachment files require complete links from their MIME parts')
-    return bound
-
-
 def evidence_digest(evidence_path):
     """Bind scope, search/source metadata and file bytes; exclude review contents."""
     path = Path(evidence_path).resolve(strict=True)
@@ -161,9 +49,6 @@ def evidence_digest(evidence_path):
             if not data:
                 raise ValueError('Evidence digest cannot include empty files')
             files[name] = hashlib.sha256(data).hexdigest()
-            if collection == 'sources' and row.get('kind') == 'message':
-                message = _unwrap(json.loads(data))
-                files.update(_bound_message_files(message, target, base, row.get('id')))
     canonical = json.dumps({'metadata': metadata, 'files': files}, sort_keys=True,
                            ensure_ascii=False, separators=(',', ':'), allow_nan=False)
     return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
@@ -187,14 +72,18 @@ def _meaningful_parts(part):
         return []
     body = part.get('body') or {}
     mime = part.get('mime_type', part.get('mimeType', ''))
+    headers = {str(h.get('name', '')).lower(): str(h.get('value', ''))
+               for h in part.get('headers', []) if isinstance(h, dict)}
+    inline_image = mime.startswith('image/') and (
+        'inline' in headers.get('content-disposition', '').lower()
+        or 'content-id' in headers)
     attachment_id = body.get('attachment_id', body.get('attachmentId'))
     filename = part.get('filename')
     result = []
-    if attachment_id or filename or body.get('file') or mime.startswith('image/'):
+    if not inline_image and (attachment_id or filename):
         result.append({'attachment_id': attachment_id,
                        'part_id': part.get('part_id', part.get('partId', '')),
-                       'filename': filename or mime or 'message body',
-                       'files': [body[key] for key in ('file', 'text_file') if _text(body.get(key))]})
+                       'filename': filename or mime or 'message body'})
     for child in part.get('parts') or []:
         result.extend(_meaningful_parts(child))
     return result
@@ -347,23 +236,14 @@ def _assess(report, evidence_path=None):
             messages[key] = source
         if disposition in {'unread', 'inaccessible'}:
             add('unreviewed_source', f'{sid}: source is {disposition}.')
-        path = None
-        if disposition == 'reviewed' or source.get('file') is not None:
-            path = local_file(source.get('file'), sid)
-        message = None
-        if kind == 'message' and path is not None:
-            try:
-                message = _unwrap(json.loads(path.read_text(encoding='utf-8')))
-                _bound_message_files(message, path, base, sid)
-                source['_audit_message_folder'] = path.parent
-            except (OSError, ValueError, TypeError) as exc:
-                add('message_extraction_unverified', f'{sid}: {exc}')
         if disposition == 'reviewed':
             counts['reviewed_sources'] += 1
             for ref in refs:
                 expected_review[ref].add(sid)
+            path = local_file(source.get('file'), sid)
             if kind == 'message' and path is not None:
                 try:
+                    message = _unwrap(json.loads(path.read_text(encoding='utf-8')))
                     payload = message.get('payload') if isinstance(message, dict) else None
                     if not isinstance(payload, dict):
                         raise ValueError('Reviewed messages require a saved full Gmail MIME payload')
@@ -376,10 +256,11 @@ def _assess(report, evidence_path=None):
                     source['_audit_required_parts'] = _meaningful_parts(payload)
                 except (OSError, ValueError, TypeError) as exc:
                     add('message_body_unverified', f'{sid}: {exc}')
+        elif source.get('file') is not None:
+            local_file(source['file'], sid)
     counts['sources'] = len(source_map)
 
     for sid, source in source_map.items():
-        message_folder = source.pop('_audit_message_folder', None)
         if source.get('kind') == 'attachment':
             parent = source.get('parent_id')
             if parent not in source_map or source_map[parent].get('kind') != 'message':
@@ -392,19 +273,12 @@ def _assess(report, evidence_path=None):
                             or (not part['attachment_id'] and a.get('part_id') == part['part_id']))]
             if not matches:
                 add('untriaged_attachment', f"{sid}: attachment {part['filename']} must be saved and reviewed, or explicitly triaged with a reason.")
-            elif part['files'] and message_folder is not None:
-                expected_files = {(message_folder / name).resolve() for name in part['files']}
-                for attachment in matches:
-                    if attachment.get('disposition') == 'reviewed':
-                        name = attachment.get('file')
-                        if not _text(name) or (base / name).resolve() not in expected_files:
-                            add('attachment_file_mismatch', f"{attachment['id']}: reviewed attachment file does not match its extracted MIME part.")
 
     searches = manifest.get('searches')
     if not isinstance(searches, list):
         add('invalid_searches', 'searches must be an array, including an empty array in files mode.')
         searches = []
-    pages, search_ids, search_coverage = {}, set(), set()
+    pages, search_ids, discovery = {}, set(), set()
     for search in searches:
         if not isinstance(search, dict) or not _text(search.get('id')):
             add('invalid_search', 'Every search needs an ID.')
@@ -420,6 +294,13 @@ def _assess(report, evidence_path=None):
         if kind not in {'merchant_discovery', 'billing', 'lifecycle'} or not _text(query):
             add('invalid_search', f'{sid}: valid kind and exact query are required.')
             continue
+        if kind == 'merchant_discovery':
+            # Ignore sender/address tokens; catch obvious keyword-only restrictions.
+            terms = re.sub(r'\b(?:from|to):[^\s()]+', '', query, flags=re.I)
+            if re.search(r'\b(?:invoices?|receipts?|payments?|paid|charges?|billing)\b', terms, re.I):
+                add('narrow_merchant_discovery', f'{sid}: merchant discovery is narrowed by English billing keywords.')
+            else:
+                discovery.update(refs)
         raw = local_file(search.get('result_file'), sid, parse=True)
         if isinstance(raw, dict) and raw.get('isError'):
             add('failed_search', f'{sid}: saved tool result reports an error.')
@@ -440,7 +321,6 @@ def _assess(report, evidence_path=None):
         if key in pages:
             add('duplicate_search_page', f'{sid}: same query and page token recorded more than once.')
         pages[key] = (next_token, set(refs))
-        search_coverage.update(refs)
         counts['search_results'] += len(results)
         for entry in results:
             mid = entry.get('id') if isinstance(entry, dict) else entry
@@ -476,8 +356,8 @@ def _assess(report, evidence_path=None):
         if {t for q, t in pages if q == query} - seen:
             add('disconnected_search_page', f'Saved pages are not reachable from the first page: {query}')
     if scope and scope['mode'] == 'mailbox':
-        for sid in by_service.keys() - search_coverage:
-            add('missing_search_coverage', 'No mailbox search with a saved result page covers this service or case.', sid)
+        for sid in by_service.keys() - discovery:
+            add('missing_merchant_discovery', 'No broad merchant discovery search is recorded.', sid)
     if scope and scope['mode'] == 'files' and not source_map:
         add('empty_file_scope', 'Files-only review must declare the supplied sources.')
 
