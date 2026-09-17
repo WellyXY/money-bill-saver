@@ -1,5 +1,7 @@
 # Money Bill Saver
 
+[![skills.sh](https://skills.sh/b/WellyXY/money-bill-saver)](https://skills.sh/WellyXY/money-bill-saver)
+
 **Know what you pay for, spot charges worth questioning, and draft refund requests—from your bills and subscription emails.**
 
 [50-second illustrated quickstart](docs/quickstart.md) · [Interactive demo](https://wellyxy.github.io/money-bill-saver/) · [Open example report](https://wellyxy.github.io/money-bill-saver/example-report.html) · [MIT license](LICENSE)
