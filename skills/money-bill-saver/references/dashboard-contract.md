@@ -1,5 +1,6 @@
 # Visual subscription document contract
 
+New audits author [audit.json](audit-model.md) and use `scripts/build_audit.py` to generate this presentation format. Consult this contract for custom views, migration or renderer maintenance; ordinary runs do not hand-author a second complete report dataset.
 Use this contract for `dashboard.json`, then render a private, self-contained `dashboard.html`. It is a presentation model derived from the sourced inventory and cases; it does not replace `facts.json`, `checks.json` or the outcome ledger.
 
 ## Three-section presentation
@@ -16,7 +17,7 @@ Counts describe their denominator: “14 services and leads” means 14 inventor
 
 ## Render
 
-Use the fixed renderer. Before delivery, follow the short [webpage preflight](web-design.md), which reads only Section 14 of the bundled design guide for ordinary audits. This contract governs financial semantics and data fields.
+Use the fixed renderer. Before delivery, follow the short [webpage preflight](web-design.md), which applies the audit-specific design checks for ordinary runs and routes template changes to the bundled guide. This contract governs financial semantics and data fields.
 
 Resolve the script and input/output paths from the installed skill and task directory:
 

@@ -66,7 +66,7 @@ The inventory count includes uncertain and historical entries; it is not a count
 
 Missing update emails do not establish non-use, continued billing or refund eligibility. A gap in selected evidence is not proof that no later messages exist. Review leads are highlighted in both inventory views, carry a specific next check and do not add a refundable amount. A claim needs its own charge, period, usage or discrepancy evidence and applicable seller terms. User-reported non-use can support an honestly attributed goodwill request; it does not establish an entitlement.
 
-The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
+The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Generated JSON retains the evidence model and invoice checks; CSV and longer narrative exports are available on request. The webpage is the primary result; a Markdown report can provide additional detail.
 
 ## Review coverage
 
@@ -85,21 +85,21 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 
 ## Workflow
 
-1. Discover services from bills, receipts and welcome, plan, trial, renewal and cancellation notices. Keep services named by the user even when no receipt is found.
-2. Classify invoices, settled receipts, payment attempts, estimates, credits and incoming reimbursements before calculating totals.
-3. Follow later events for the same account and transaction. A newer payment or plan confirmation can change an earlier conclusion while the full timeline remains available.
-4. Check invoice arithmetic, identity, service periods, rates, usage and potential duplicate payments. Record evidence gaps explicitly.
-5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
-6. Apply the bundled design guidance and render the three-section webpage with evidence, actions and local drafts.
-7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
+1. Search six months of invoice/receipt subjects across senders and categories, then add payment channels, trial notices and targeted account events. Keep user-named services even without receipts.
+2. Deduplicate candidates before reading. Preserve raw messages and material attachments; inspect original PDF pages when extraction warnings, scans, ambiguous layout or conflicting values require it.
+3. Record invoices, typed payment/lifecycle events, service decisions, costs and sourced drafts once in `audit.json`. Keep accounts, currencies, failed payments and successful charges distinct.
+4. Generate the existing report, arithmetic checks and evidence views with `scripts/build_audit.py`; no run-specific report-building program is needed.
+5. Independently review frozen entity packets plus overall discovery/cost coverage. Material gaps and unavailable review keep the webpage provisional.
+6. Open the webpage for a basic data/display check and deliver the three sections with the shared cost sheet. Full mobile/theme/interaction regressions belong to template changes.
+7. Submit requests or change settings only within the user's separate authorization and the host's actual capabilities; preserve receipts and verify outcomes.
 
 ## Completion checks before the first report
 
-Mailbox reviews default to the last **six calendar months**, unless you request another period. Start with billing channels, then use targeted sender/account/thread checks for cancellations, refunds and plan or payment changes. Read the selected query pages and relevant messages/attachments. Automatic brand-wide searches are off; unresolved questions stay visible for a separate follow-up. Annual plans without a notice in the selected period may be absent.
+Mailbox reviews default to the last **six calendar months**, unless you request another period. Start with generic invoice/receipt subjects across senders and categories plus applicable billing channels, then use targeted sender/account/thread checks for cancellations, refunds and plan or payment changes. Read the selected query pages and relevant messages/attachments. Automatic brand-wide searches are off; unresolved questions stay visible for a separate follow-up. Annual plans without a notice in the selected period may be absent.
 
-New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
+New audits author one [canonical audit model](skills/money-bill-saver/references/audit-model.md) and generate an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Shared discovery stays separate from actual service evidence. Another reviewer checks relevant originals against each proposed row and checks global discovery exclusions/cost inputs. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
 
-The executable gate checks scoped search coverage, selected pagination, unreviewed records, attachment coverage, review findings and stale bindings. Focused billing/lifecycle searches satisfy coverage; an unrestricted merchant pass is not required. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
+The executable gate checks scoped search coverage, selected pagination, unreviewed records, attachment coverage, review findings and stale bindings. Canonical mailbox runs must record the generic billing search strategy and actual query chains. Relevant discovery-source links or focused billing/lifecycle searches establish per-entity coverage; an unrestricted merchant pass is not required. Legacy evidence files remain readable, and declared search strategy does not prove every relevant query was chosen. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
 
 ```sh
 python skills/money-bill-saver/scripts/check_audit.py \
@@ -140,9 +140,9 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 ## Context use and design guidance
 
-`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with payment channels, app stores, card alerts and trial notices, then checks related account events through targeted queries or the relevant thread within the selected scope.
+`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with generic invoice/receipt subjects, supplements with payment channels, app stores, card alerts and trial notices, then checks targeted account events or relevant threads within scope.
 
-Reports use the fixed template. Ordinary runs read the short [webpage preflight](skills/money-bill-saver/references/web-design.md) and only **Section 14: FINAL PRE-FLIGHT CHECK** of the bundled [design-taste-frontend guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check). Its landing-page and framework rules do not override financial evidence or trigger a redesign. The full guide remains available for an explicitly requested redesign.
+Reports use the fixed template. Ordinary runs apply the short [webpage preflight](skills/money-bill-saver/references/web-design.md), the audit-specific integration of **design-taste-frontend**. Template changes start with Section 14 of the bundled [design guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check) and the relevant design sections. The full guide remains available for redesigns; financial evidence determines the inventory and content.
 
 The bundled guide is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), retaining its [MIT notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). Original Money Bill Saver material is available under the repository's [MIT license](LICENSE).
 
@@ -183,6 +183,17 @@ python skills/money-bill-saver/scripts/extract_mime.py \
 
 The MIME output preserves the original response, decoded attachments and readable derivatives with integrity bindings. Source entries start unread; review them before including their conclusions in an audit. Keep the output bundle together when moving it, and use an output directory separate from the input files. Complete saved tool results are supported; truncated previews must be retrieved again rather than treated as complete messages.
 
+Build a report from one canonical model (the input and imported evidence stay inside the private bundle):
+
+```sh
+python skills/money-bill-saver/scripts/build_audit.py \
+  --input /private/work/audit.json --output-dir /private/work
+```
+
+Start from [the compact model contract](skills/money-bill-saver/references/audit-model.md) and [synthetic model example](skills/money-bill-saver/assets/example-audit.json). The builder generates the report and checker inputs, retaining provisional status until real evidence and independent review satisfy the gate. `scripts/prepare_review.py` prepares evidence packets; it never approves a report on the reviewer's behalf. Existing `facts.json` and `dashboard.json` formats remain supported by their original tools.
+
+For a damaged PDF extraction, select a second local parser with `extract_pdf.py --backend pdftotext` when Poppler is available, preserving a fresh output directory and both extracts. Exact-byte duplicate PDFs in one extraction batch reuse parsing while retaining separate source records.
+
 Render the synthetic webpage example:
 
 ```sh
@@ -191,7 +202,7 @@ python skills/money-bill-saver/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-All five tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
+All helper tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
 ## Cost and evidence semantics
 
@@ -226,7 +237,16 @@ The synthetic test suite covers decimal arithmetic, document identity and duplic
 
 Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. MIME regressions cover truncated messages, inline invoice images, attached messages, HTML charset declarations, PDFs without file extensions, portable PDF manifests, and failed output replacement. Original responses and readable derivatives are checked for modification or omission. These tests verify the gate's behavior; they do not replace factual review of real documents.
 
-Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+Browser and visual checks are separate from these automated tests. Ordinary audits use a basic report check; template changes use the full interaction/mobile checklist. Synthetic program tests do not establish real-mailbox discovery accuracy or runtime. Detailed benchmark traces and preserved first proposals are created only for a requested evaluation.
+
+## Unreleased — canonical audit pipeline
+
+- Required invoice/receipt discovery across senders/categories within the six-month scope, with explicit search-plan coverage.
+- One canonical observation/decision model generates the webpage and supporting views, preserving unknowns, accounts, currencies and source references.
+- Global candidate triage is separate from actual entity evidence; frozen review packets avoid all-to-all evidence associations.
+- PDF warnings trigger focused original-page checks; optional parser selection and batch extraction reuse preserve provenance.
+- Routine reports use a short display preflight. Full browser regressions remain part of template changes.
+- Live-mailbox performance and accuracy will be evaluated separately; no runtime reduction is claimed from synthetic checks.
 
 ## v0.8.2
 

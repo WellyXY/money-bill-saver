@@ -1,0 +1,98 @@
+{
+  "schema_version": "audit-1",
+  "title": "Synthetic example: bills and open questions",
+  "scope": {
+    "mode": "files",
+    "as_of": "2030-01-15",
+    "start": "2029-07-15",
+    "end": "2030-01-15",
+    "description": "SYNTHETIC DEMO ONLY. One fictional account; no mailbox was accessed.",
+    "limitations": ["This fixture is its own synthetic source, not a real receipt.", "No independent review was performed."]
+  },
+  "sources": [
+    {
+      "id": "synthetic-observations",
+      "kind": "document",
+      "type": "other",
+      "file": "audit.json",
+      "disposition": "reviewed",
+      "note": "Fictional invoice and payment observations explicitly supplied by this demonstration fixture. Never use self-authored facts as original evidence in a real audit."
+    }
+  ],
+  "entities": [
+    {
+      "id": "notes-personal",
+      "kind": "service",
+      "name": "Example Notes",
+      "vendor": "example-notes",
+      "account_ref": "personal",
+      "subscription_ref": "synthetic-notes-plan",
+      "plan": "Monthly",
+      "decision": {
+        "status": "observed",
+        "status_label": "Observed paid service period",
+        "status_note": "Synthetic payment and period cover the review date. A later failed payment does not replace the successful payment date.",
+        "source_refs": ["synthetic-observations"],
+        "unknowns": ["Current usage", "Next renewal date and the reason for the failed payment attempt"],
+        "review_group": "other",
+        "issue": {
+          "title": "Check the failed payment attempt",
+          "summary": "One later attempt failed; this does not establish another successful charge or a refundable amount."
+        },
+        "action": {
+          "summary": "Check the account payment history and next renewal setting.",
+          "steps": ["Confirm what the failed attempt was for.", "Check whether the service is still needed."]
+        }
+      },
+      "cost": {
+        "kind": "fixed_monthly",
+        "invoice_record_id": "notes-invoice",
+        "months": 1,
+        "include_monthly": true,
+        "basis": "Synthetic current monthly fee for the identified account; usage is unknown."
+      }
+    }
+  ],
+  "invoices": [
+    {
+      "record_id": "notes-invoice",
+      "entity_id": "notes-personal",
+      "invoice_ref": "SYN-001",
+      "issued_on": "2030-01-01",
+      "currency": "USD",
+      "amount_due": "12.00",
+      "line_items_complete": true,
+      "source_refs": ["synthetic-observations"],
+      "line_items": [
+        {
+          "label": "Monthly plan",
+          "kind": "base",
+          "amount": "12.00",
+          "period": {"start": "2030-01-01", "end": "2030-02-01"}
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "notes-payment",
+      "entity_id": "notes-personal",
+      "type": "payment_succeeded",
+      "occurred_on": "2030-01-01",
+      "amount": "12.00",
+      "currency": "USD",
+      "invoice_record_id": "notes-invoice",
+      "source_refs": ["synthetic-observations"],
+      "note": "Synthetic explicit successful cash payment. No clock time was provided."
+    },
+    {
+      "id": "notes-failed-attempt",
+      "entity_id": "notes-personal",
+      "type": "payment_failed",
+      "occurred_on": "2030-01-10",
+      "source_refs": ["synthetic-observations"],
+      "note": "Synthetic failed payment attempt, purpose not established."
+    }
+  ],
+  "independent_review_file": "independent-review.json"
+}

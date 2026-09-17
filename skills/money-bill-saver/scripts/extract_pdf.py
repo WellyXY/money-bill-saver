@@ -25,26 +25,36 @@ class ExtractionError(ValueError):
     pass
 
 
-def extract_pages(path):
+def poppler_pages(path):
+    binary = shutil.which("pdftotext")
+    if not binary:
+        raise ExtractionError("Poppler pdftotext is unavailable; use pypdf or inspect the original visually.")
+    try:
+        proc = subprocess.run(
+            [binary, "-layout", "-enc", "UTF-8", str(path), "-"],
+            capture_output=True, timeout=60, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ExtractionError("Local PDF extraction failed or timed out.") from exc
+    if proc.returncode:
+        raise ExtractionError("PDF could not be read; check encryption or supply a readable export.")
+    parts = proc.stdout.decode("utf-8", errors="replace").split("\f")
+    if len(parts) > 1 and not parts[-1].strip():
+        parts.pop()
+    return parts, "pdftotext", bool(proc.stderr)
+
+
+def extract_pages(path, backend="auto"):
+    if backend not in {"auto", "pypdf", "pdftotext"}:
+        raise ExtractionError("Unknown PDF backend.")
+    if backend == "pdftotext":
+        return poppler_pages(path)
     try:
         from pypdf import PdfReader
     except ImportError:
-        binary = shutil.which("pdftotext")
-        if not binary:
-            raise ExtractionError("Use a Python runtime with pypdf, or install Poppler pdftotext.")
-        try:
-            proc = subprocess.run(
-                [binary, "-layout", "-enc", "UTF-8", str(path), "-"],
-                capture_output=True, timeout=60, check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise ExtractionError("Local PDF extraction failed or timed out.") from exc
-        if proc.returncode:
-            raise ExtractionError("PDF could not be read; check encryption or supply a readable export.")
-        parts = proc.stdout.decode("utf-8", errors="replace").split("\f")
-        if len(parts) > 1 and not parts[-1].strip():
-            parts.pop()
-        return parts, "pdftotext", bool(proc.stderr)
+        if backend == "pypdf":
+            raise ExtractionError("The selected Python runtime does not have pypdf.")
+        return poppler_pages(path)
 
     warnings = io.StringIO()
     try:
@@ -78,7 +88,9 @@ def private_write(path, text, force):
             os.unlink(name)
 
 
-def extract_files(paths, output_dir, force=False):
+def extract_files(paths, output_dir, force=False, backend="auto"):
+    if backend not in {"auto", "pypdf", "pdftotext"}:
+        raise ExtractionError("Unknown PDF backend.")
     sources = []
     seen = set()
     for item in paths:
@@ -105,8 +117,13 @@ def extract_files(paths, output_dir, force=False):
 
     documents = []
     texts = []
+    extracted = {}
     for path, target in planned:
-        pages, backend, parser_warning = extract_pages(path)
+        fingerprint = hashlib.sha256(path.read_bytes()).hexdigest()
+        reused = fingerprint in extracted
+        if not reused:
+            extracted[fingerprint] = extract_pages(path, backend)
+        pages, used_backend, parser_warning = extracted[fingerprint]
         page_rows = []
         chunks = []
         for i, value in enumerate(pages, 1):
@@ -120,6 +137,10 @@ def extract_files(paths, output_dir, force=False):
                 review_reasons.append("insufficient_text")
             if controls:
                 review_reasons.append("unexpected_control_characters")
+            if "\ufffd" in value:
+                review_reasons.append("replacement_characters")
+            if parser_warning:
+                review_reasons.append("parser_warning")
             page_rows.append({
                 "page": i,
                 "characters": len(stripped),
@@ -135,10 +156,11 @@ def extract_files(paths, output_dir, force=False):
             chunks.append(f"--- PAGE {i} ---\n{value}\n")
         documents.append({
             "source": str(path),
-            "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "source_sha256": fingerprint,
             "text_file": str(target),
-            "backend": backend,
+            "backend": used_backend,
             "parser_warning": parser_warning,
+            "extraction_reused": reused,
             "pages": page_rows,
         })
         texts.append((target, "\n".join(chunks)))
@@ -159,9 +181,10 @@ def main():
     parser.add_argument("pdfs", nargs="+", help="Explicit local PDF paths")
     parser.add_argument("--output-dir", required=True, help="Private directory for extracted text and manifest.json")
     parser.add_argument("--force", action="store_true", help="Replace this helper's named outputs")
+    parser.add_argument("--backend", choices=["auto", "pypdf", "pdftotext"], default="auto", help="Select a local parser; preserve a separate output directory when cross-checking damaged text")
     args = parser.parse_args()
     try:
-        result = extract_files(args.pdfs, args.output_dir, args.force)
+        result = extract_files(args.pdfs, args.output_dir, args.force, args.backend)
     except (ExtractionError, OSError) as exc:
         print(f"Extraction failed: {exc}", file=sys.stderr)
         return 2

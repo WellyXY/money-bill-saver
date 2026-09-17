@@ -1,6 +1,6 @@
 # Email search checklist
 
-Start with transaction channels, identify bills and services, then check related account events that could change a conclusion. Run separately for each selected mailbox. Automatic collection stays focused on billing and relevant account events; broader discovery is reserved for a user-requested follow-up.
+Start with invoice/receipt subjects across senders and categories, supplement with transaction channels, then check related account events that could change a conclusion. Run separately for each selected mailbox. Automatic collection stays focused on billing and relevant account events within the chosen period.
 
 ## 1. Fix the account and time window
 
@@ -12,7 +12,17 @@ Start with transaction channels, identify bills and services, then check related
 
 ## 2. Run separate candidate searches
 
-Use `billing` or `lifecycle` for these focused searches. Run the channels relevant to the available host and task; record skips and reasons. There is no mandatory merchant-wide pass afterward.
+Use `billing` or `lifecycle` for these focused searches. A broad mailbox audit requires the generic billing search below; run the additional channels relevant to the host and record skips/reasons. A single-charge task can stay targeted. There is no mandatory merchant-wide pass afterward.
+
+**Generic invoices and receipts — required mailbox discovery, `billing`**
+
+```text
+<DATES> {subject:invoice subject:receipt subject:"billing statement" subject:發票 subject:收據 subject:帳單 subject:月結單 subject:應付憑據}
+```
+
+Run this across senders and categories, including archived mail within the authorized folders. Invoice mail can be classified as Updates and can come directly from a merchant rather than Stripe. Purchases-category or processor queries do not replace this search. Include relevant mailbox-language equivalents and keep the original executed query. Subject-only terms limit incidental matches in marketing bodies; the channels below cover additional naming patterns. If the host lacks equivalent subject search, use its supported general billing search and describe that substitution. If it cannot search billing evidence at all, record the gap and retain provisional status.
+
+Record the actual first-page search IDs under `scope.search_plan.generic_invoice_receipt` using the versioned [search plan](audit-evidence-contract.md#search-coverage). Mark these shared searches `scope: "discovery"` with `service_ids: []`; this declares a candidate pool, not evidence for every entity. The reviewer checks the exact queries against the declared strategy. A generic query with restrictive sender/category filters does not satisfy this step.
 
 **Purchases category — `billing`**
 
@@ -55,11 +65,12 @@ Use a sender verified from the user's records. If no issuer sender is known, fir
 
 Read the named service, trial deadline and announced price. Confirm whether a charge occurred and whether cancellation or a later plan event supersedes the notice. A reminder is not proof of payment.
 
-For other mailbox languages, replace or extend the phrase sets using terms actually seen in the records: `月結單`, `應付憑據`, `收據`, `已取消`, `請求書`, `領収書`, `Rechnung`, `facture`. Expand subject-only searches to full-message searches when receipts use unfamiliar subjects.
+For other mailbox languages, replace or extend the phrase sets using terms actually seen in the records: `請求書`, `領収書`, `Rechnung`, `facture`. When an observed or user-named service uses unfamiliar subjects, use a targeted sender/account plus full-message billing query within the same period.
 
 ## 3. Control noise without losing evidence
 
 - [ ] Read result headers/snippets first to identify candidates. Fetch full bodies for relevant or ambiguous messages; fetch raw MIME only for identified messages whose complete content or attachments require it. Follow the attachment procedure in [billing-review.md](billing-review.md).
+- [ ] Deduplicate overlaps before reading bodies. Within the selected account, reuse saved messages and exact-byte attachment extraction; preserve each search occurrence and attachment association. A duplicate document is not another payment.
 - [ ] Group clear promotions for efficient triage, retaining each message ID and a specific reason. Subject keywords alone cannot exclude an ambiguous plan, trial or account notice. Promotions can carry useful account leads.
 - [ ] Prefer confirmed senders plus billing/event terms over bare brand words. For shared payment senders, include the observed merchant/account identifier. If a category exclusion prioritizes a pass, record it and use focused sender/event checks for relevant notices that may be misclassified.
 - [ ] Follow every page token with the same exact query until it ends. A result estimate or the first 100/200 items is not completion. Gmail's [list API](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list) returns IDs and paging metadata; retrieve message content separately when needed.
@@ -85,15 +96,15 @@ Add `in:anywhere` only when Spam and Trash are authorized; otherwise state the e
 
 - [ ] Preserve exact executed queries, selected account/window/folders, raw result pages, request/next tokens and source IDs under [audit-evidence-contract.md](audit-evidence-contract.md). Use `result_file` for searches and `file` for sources.
 - [ ] Give every returned ID a disposition and reason: `reviewed`, `irrelevant`, `unread` or `inaccessible`. An irrelevant result need not have a full download; relevant reviewed messages and attachments need saved content. Record attachments separately.
-- [ ] Associate searches and results with real `service_ids`. Shared-channel searches cover multiple candidates: triage each returned ID against that declared set as the contract requires. Use focused follow-ups where possible; never invent a merchant or silently omit noisy results to satisfy the gate.
+- [ ] Keep discovery coverage separate from service evidence. Shared candidate searches use `scope: "discovery"`, `service_ids: []`. Relevant source entries bind to the actual service/case IDs they concern. Targeted searches bind to those entities; an unsupported user-named service still needs a recorded targeted search, including its zero-result page.
 
-For a shared query associated with already discovered `service-a` and `service-b`, a clearly unrelated promotion can be recorded as below (illustrative IDs). Here `service_ids` names the scope against which it was excluded, not the promotion's merchant. Relevant messages still need full saved content; ambiguous messages stay unread until resolved.
+For a global discovery query, a clearly unrelated promotion can be excluded once (illustrative ID). Relevant messages need saved content and their real entity association; ambiguous messages stay unread until resolved. Neither the shared query nor its irrelevant results need to be copied into every service's review packet.
 
 ```json
-{"id":"gmail:promo-message-id","service_ids":["service-a","service-b"],"kind":"message","disposition":"irrelevant","note":"Sender, subject and snippet identify a generic webinar invitation; no account, payment or lifecycle event for either service."}
+{"id":"gmail:promo-message-id","service_ids":[],"kind":"message","disposition":"irrelevant","note":"Sender, subject and snippet identify a generic webinar invitation; no account, payment or lifecycle event."}
 ```
 
-- [ ] Finish when the chosen channel searches and relevant targeted checks are paged and triaged, material bodies/attachments are read, and report conclusions reflect relevant later events. Each reported service/case needs recorded search coverage, including a focused no-result search for an unsupported user-named service. Invoice/receipt filters are valid coverage; unrestricted merchant searches are not required.
+- [ ] Finish when the generic invoice/receipt search, applicable channel searches and relevant targeted checks are paged and triaged, material bodies/attachments are read, and conclusions reflect later events. Each reported service/case needs real discovery-source or targeted-search coverage, including a focused no-result search for an unsupported user-named service. An exhausted query list can still have a discovery gap; the reviewer checks query choices and excluded candidates too.
 - [ ] Preserve explicit unknowns and the period boundary. Missing activity, price or older annual-plan evidence is not a reason to invent values or expand the search. Material unread/truncated sources and incomplete independent review keep the report provisional under the evidence contract. A checked report describes the declared evidence, not every subscription the user may have.
 
 Primary guidance checked September 16, 2026. Adapt the starting queries to observed senders and languages.
