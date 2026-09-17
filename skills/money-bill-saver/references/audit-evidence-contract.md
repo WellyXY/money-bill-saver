@@ -77,6 +77,8 @@ The checker examines each text part for omitted content. A plain-text fallback s
 
 Attachment entries need `parent_id` matching the parent message source and `attachment_id` matching its exact MIME attachment ID. For an attachment embedded directly in MIME with no attachment ID, use its exact `part_id`. Attachments inherit all parent service associations. A relevant PDF is not reviewed merely because its enclosing message was read. If a PDF is genuinely irrelevant, explain that specifically; a generic exclusion note is not a substitute for reviewing billing evidence.
 
+`scripts/extract_mime.py` converts a saved raw message (Gmail RAW JSON, with or without a `structuredContent` wrapper, or an `.eml` file) into this shape. Its `message.json` is a full MIME payload with decoded text bodies and base64url attachment data; attachments have no Gmail attachment ID, so they are matched by `part_id`. Each manifest message carries `evidence_sources` entries with `disposition: "unread"`, empty `service_ids` and paths relative to the helper's output directory. Place that directory below the bundle root, prefix the paths accordingly, add service IDs, and change a disposition only after the content has actually been read.
+
 The checker confirms file presence and declared review coverage. The agent and independent reviewer remain responsible for reading PDF pages, OCR where needed, and interpreting the contents.
 
 ## Independent review bound to the report

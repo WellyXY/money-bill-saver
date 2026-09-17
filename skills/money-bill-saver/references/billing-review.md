@@ -18,6 +18,15 @@ Keep every service named by the user in the inventory even when the search finds
 
 For multipart email, inspect whether the plain-text part contains meaningful content before dropping an HTML alternative. Empty text, “view in browser” and “HTML not supported” fallbacks require reading the HTML part; preserve its source identity and original content. Before reporting an unreadable message or missing amount, check available body alternatives and attachments. A truncated attachment preview is not a complete read: use the complete extraction or original file and inspect relevant pages. If an attachment download fails, use an available authorized alternative such as the original message's MIME attachment; record remaining failures rather than treating the document as absent.
 
+Attachment retrieval order:
+
+1. Check every read tool for a raw or full-MIME option; a thread-level tool and a single-message tool can differ.
+2. Fetch the single billing message in raw form, keep the exact tool result on disk and convert it with `scripts/extract_mime.py --extract-pdf`. Read the resulting `body.txt`, attachment text files and PDF pages; inspect images and pages flagged for visual review.
+3. If raw MIME is unavailable, ask the user to upload the attachment or connect a folder, or open the message in an authorized browser session.
+4. Record each attachment as reviewed, irrelevant (with a specific reason) or inaccessible with the retrieval route that failed. An attachment is never reviewed merely because its parent body was read.
+
+Attachments can be PDFs, HTML invoices (common for Taiwanese e-invoices, often Big5) or CSV exports. Use the decoded text; keep original identifiers and amounts exactly as printed.
+
 If no date range was specified for a mailbox-wide request, propose/use a stated last-13-month window within the user's authorized scope to include annual renewals; follow a user request for all history if supported. Local file reviews cover the supplied documents. A missing mailbox connection does not prevent file-based work: request selected exports while reviewing available evidence. Do not silently substitute samples or claim a mailbox scan.
 
 Classify documents before arithmetic:
