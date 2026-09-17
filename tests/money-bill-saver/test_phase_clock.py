@@ -44,6 +44,20 @@ class PhaseClockTests(unittest.TestCase):
             self.assertEqual([row["phase"] for row in result["phases"]],
                              ["discovery", "evidence", "report", "preview"])
 
+    def test_failed_output_stops_even_when_stage_is_fast(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.json"
+            clock.begin(path, "test-revision", "live", "six months", "test-model", "2026-09-17T00:00:00Z")
+            clock.finish(path, "discovery", {"candidates": 20}, "2026-09-17T00:01:00Z")
+            failed = clock.mark_failed(path, "candidate index missing")
+            self.assertEqual(failed["status"], "stop")
+            self.assertEqual(failed["phases"][-1]["result"], "failed_check")
+            clock.resume(path, "2026-09-17T01:00:00Z")
+            replayed = clock.finish(path, "discovery", {"candidates": 20}, "2026-09-17T01:00:20Z")
+            self.assertEqual(replayed["status"], "running")
+            self.assertEqual(replayed["phases"][-1]["mode"], "replay")
+            self.assertEqual(replayed["elapsed_seconds"], 20)
+
 
 if __name__ == "__main__":
     unittest.main()

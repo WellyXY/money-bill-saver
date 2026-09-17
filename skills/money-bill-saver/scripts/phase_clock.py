@@ -83,12 +83,29 @@ def finish(path, phase, counts=None, now=None):
 
 def resume(path, now=None):
     record = json.loads(path.read_text(encoding="utf-8"))
-    if record.get("status") != "stop" or record["phases"][-1]["result"] != "over_budget":
+    if record.get("status") != "stop" or record["phases"][-1]["result"] not in {"over_budget", "failed_check"}:
         raise ValueError("Only a stopped failed phase can be resumed")
     record["status"] = "running"
     record["current_mode"] = "replay"
     record["phase_started_at"] = _stamp(_time(now))
     record["retries"] = record.get("retries", 0) + 1
+    _write(path, record)
+    return record
+
+
+def mark_failed(path, reason):
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if record.get("status") not in {"running", "completed"} or not record["phases"]:
+        raise ValueError("Only the latest successful phase can be marked failed")
+    latest = record["phases"][-1]
+    if latest["result"] != "within_budget":
+        raise ValueError("The latest phase already failed")
+    if not reason.strip():
+        raise ValueError("A concrete failure reason is required")
+    latest["result"] = "failed_check"
+    latest["failure_reason"] = reason
+    record["status"] = "stop"
+    record["stop_reason"] = f"{latest['phase']} failed its output check: {reason}"
     _write(path, record)
     return record
 
@@ -118,12 +135,17 @@ def main():
     next_step.add_argument("--count", action="append", default=[])
     replay = commands.add_parser("resume")
     replay.add_argument("--output", required=True, type=Path)
+    failed = commands.add_parser("mark-failed")
+    failed.add_argument("--output", required=True, type=Path)
+    failed.add_argument("--reason", required=True)
     args = parser.parse_args()
     try:
         if args.command == "begin":
             result = begin(args.output, args.revision, args.mode, args.window, args.model)
         elif args.command == "finish":
             result = finish(args.output, args.phase, _counts(args.count))
+        elif args.command == "mark-failed":
+            result = mark_failed(args.output, args.reason)
         else:
             result = resume(args.output)
         print(json.dumps({"status": result["status"], "elapsed_seconds": result.get("elapsed_seconds", 0),
