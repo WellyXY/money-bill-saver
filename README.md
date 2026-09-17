@@ -4,7 +4,7 @@ A Codex skill for reviewing bills and subscriptions across merchants, investigat
 
 **Version: v0.9.0 / Stage 0**
 
-The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
+The primary output is a private, self-contained webpage. The default run is a focused review of selected billing evidence: it delivers the first useful page after preview, then stops. An exhaustive evidence audit is a separate, requested mode. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
 ## What the audit delivers
 
@@ -30,7 +30,7 @@ The inventory count includes uncertain and historical entries; it is not a count
 
 Missing update emails do not establish non-use, continued billing or refund eligibility. A gap in selected evidence is not proof that no later messages exist. Review leads are highlighted in both inventory views, carry a specific next check and do not add a refundable amount. A claim needs its own charge, period, usage or discrepancy evidence and applicable seller terms. User-reported non-use can support an honestly attributed goodwill request; it does not establish an entitlement.
 
-The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
+The document includes source timelines, issue details, known account or support entries and copyable local drafts where appropriate. Subscription reviews show a known monthly baseline with its components and unresolved prices or usage. The focused path also writes `dashboard.json`; a requested full audit can retain detailed JSON/CSV evidence exports and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
 
 ## Review coverage
 
@@ -47,21 +47,25 @@ The common workflow applies across merchants in the supplied evidence. Railway i
 
 Non-use triggers a separate refund assessment. Eligibility depends on the purchase channel, dates, applicable terms and evidence. A clearly attributed goodwill request can be appropriate when entitlement is not established. Cancelling future renewal and requesting a past-charge refund remain separate actions.
 
-## Workflow
+## Default focused workflow
 
-1. Discover services from bills, receipts and welcome, plan, trial, renewal and cancellation notices. Keep services named by the user even when no receipt is found.
+For a mailbox review, use a six-month window unless the user supplies dates. Search high-signal billing subjects and named merchants, save metadata-rich result pages once, and build a local candidate index. Read decisive invoices, receipts and later outcomes for issue-bearing merchants. Write a compact `quick-1` decision file, then run `scripts/build_quick_report.py` and `scripts/preview_quick.py`. Deliver the focused page with its scope and unknowns; do not automatically run the full evidence gate. Known official account entries can be linked as possible status-check destinations, and plausible same-purpose services can carry tentative keep-one prompts without inventing savings.
+
+## Detailed audit workflow (on request)
+
+1. Search known merchants and high-signal bill, receipt, welcome and trial messages. Prefer search results with sender, subject and date metadata; save pages once and group candidates locally before opening full messages. Keep services named by the user even when no receipt is found.
 2. Classify invoices, settled receipts, payment attempts, estimates, credits and incoming reimbursements before calculating totals.
 3. Follow later events for the same account and transaction. A newer payment or plan confirmation can change an earlier conclusion while the full timeline remains available.
 4. Check invoice arithmetic, identity, service periods, rates, usage and potential duplicate payments. Record evidence gaps explicitly.
 5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
-6. Apply the bundled design guidance, expand the findings into report data with `scripts/build_report.py`, and render the three-section webpage with evidence, actions and local drafts.
+6. Expand the findings into report data with `scripts/build_report.py` and render the existing three-section webpage with evidence, actions and local drafts. Apply the bundled design guidance when changing its visual design.
 7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
 
-## Completion checks before the first report
+## Full audit completion gate
 
 Before concluding that invoices, payments or later account changes are missing, run a merchant/seller/provider search without billing keyword restrictions. Read localized billing and lifecycle messages, every available result page, full message bodies and relevant attachments. Later cancellation, plan changes, low-balance notices and resource removal can change an earlier conclusion.
 
-New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. That coverage is the required gate.
+Full audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. That coverage is the required gate for the detailed mode, not for the default focused page.
 
 Independent review is a separate pass the user asks for, not a step of every audit. A second reviewer reads the original evidence against the finished report, looking for omitted billing events, invoices treated as payments and conclusions that exceed their evidence. When one runs, it is bound to the full report, its service/case rows and the evidence bytes, so later edits to summaries, costs or sources require a new review.
 
@@ -99,7 +103,7 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 ## Bundled design guidance
 
-Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
+For a routine audit, use the existing renderer and verify the output with [`web-design.md`](skills/money-bill-saver/references/web-design.md). Read the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md) when changing the template, layout or visual style. The full design source is included inside this skill; installation does not depend on a separate personal skill path.
 
 The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
 
@@ -107,7 +111,17 @@ The page uses native CSS and self-contained assets. Light and dark themes, respo
 
 ## Local tools
 
-The tools have been tested with Python 3.12. Invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable. Raw email decoding uses the standard library and reuses the PDF extractor for PDF attachments.
+The tools have been tested with Python 3.12. Candidate indexing, invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable. Raw email decoding uses the standard library and reuses the PDF extractor for PDF attachments.
+
+Save metadata-rich mail search results once, then build a private navigation index before fetching full messages:
+
+```sh
+python3 skills/money-bill-saver/scripts/index_mail_candidates.py \
+  --input private-task/saved-search-1.json --input private-task/saved-search-2.json \
+  --output private-task/candidate-index.json --summary-output private-task/candidate-summary.json
+```
+
+Store raw metadata search pages under a private task directory (`0700` directory, `0600` files); they contain subjects and snippets. Include the exact query and, when multiple mailboxes are in scope, a `mailbox` label in each saved search bundle. Build a separate index per mailbox. The index groups sender domains and subject patterns, deduplicates message IDs within that mailbox, flags ID-only results that still need metadata and reports incomplete page chains. `saved_query_pages_complete` refers only to the saved query chains, not to complete mailbox coverage. Read the bounded private summary first; if any count in `omitted_groups` exceeds zero, inspect those groups from the private full index before claiming the scope reviewed. It does not classify charges or replace reading relevant billing evidence.
 
 Install the tested dependencies in an isolated environment:
 
@@ -156,7 +170,7 @@ python skills/money-bill-saver/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-All six tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
+The command-line helpers support `--help`; builders require `--force` to replace existing generated output. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
 ## Cost and evidence semantics
 
@@ -246,7 +260,7 @@ Browser and visual checks are separate from these automated tests. Use the host'
 ## v0.4.0
 
 - English defaults for reports, interface text, exports, examples and repository documentation, with explicit language overrides.
-- A full portable copy of `design-taste-frontend`, required reading for every audit webpage run.
+- A full portable copy of `design-taste-frontend` for changes to the audit webpage's design.
 - Audit-specific design integration that preserves the complete financial inventory, three-section structure, private data and offline delivery.
 - Refined page presentation with theme, responsive-layout and interaction guidance while retaining the existing evidence and cost boundaries.
 

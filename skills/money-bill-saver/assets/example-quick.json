@@ -1,0 +1,43 @@
+{
+  "schema_version": "quick-1",
+  "as_of": "2030-01-15",
+  "scope": {
+    "description": "SYNTHETIC EXAMPLE. Two fictional services and a one-time purchase; no mailbox was accessed.",
+    "limitations": ["Usage and bank statements were not supplied."]
+  },
+  "sources": [
+    {"id": "synthetic-plan", "label": "Example Notes plan confirmation", "date": "2030-01-01", "note": "Fictional current monthly plan confirmation."},
+    {"id": "synthetic-receipt", "label": "Example Notes paid receipt", "date": "2030-01-02", "note": "Fictional receipt explicitly says payment succeeded."},
+    {"id": "synthetic-other", "label": "Example Storage invoice", "date": "2030-01-09", "note": "Fictional invoice with an unclear additional fee."},
+    {"id": "synthetic-purchase", "label": "Example one-time purchase receipt", "date": "2030-01-12", "note": "Fictional nonrecurring purchase."}
+  ],
+  "services": [
+    {
+      "id": "notes-personal", "name": "Example Notes", "vendor": "example-notes", "account_ref": "personal",
+      "status": "observed", "status_note": "The cited plan confirmation establishes a current monthly service.",
+      "source_refs": ["synthetic-plan"],
+      "cost": {"kind": "fixed_monthly", "amount": "12.00", "currency": "USD", "include_monthly": true,
+               "basis": "Current monthly plan price", "source_refs": ["synthetic-plan"]},
+      "dates": {"last_invoice": {"date": "2030-01-01", "source_refs": ["synthetic-plan"]},
+                "last_charge": {"date": "2030-01-02", "source_refs": ["synthetic-receipt"]}},
+      "unknowns": ["Next renewal date"]
+    },
+    {
+      "id": "storage-personal", "name": "Example Storage", "vendor": "example-storage", "account_ref": "personal",
+      "status": "uncertain", "status_note": "The invoice establishes a bill, but current service and payment remain unconfirmed.",
+      "source_refs": ["synthetic-other"],
+      "cost": {"kind": "invoice_total", "amount": "19.00", "currency": "USD", "source_refs": ["synthetic-other"],
+               "note": "Observed invoice total; the recurring amount is unknown."},
+      "issue": {"group": "refund", "title": "Ask about an unexplained fee",
+                "summary": "The invoice shows an additional fee that needs an account-level explanation.",
+                "next": "Check the fee against the purchased plan, then ask support for an adjustment if unsupported.",
+                "amount_label": "USD 7.00 to verify", "source_refs": ["synthetic-other"],
+                "missing": ["Purchased plan terms", "Payment evidence"]}
+    }
+  ],
+  "cases": [],
+  "appendix": [
+    {"name": "Example purchase", "note": "A one-time purchase with no billing question identified.",
+     "source_refs": ["synthetic-purchase"]}
+  ]
+}

@@ -1,19 +1,19 @@
 # Audit webpage design integration
 
-## Required reading for every webpage run
+## Design guidance for audit webpages
 
-Before producing or revising an audit webpage, read this integration and the **complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md)**, including its preflight. The bundled file is a full, unmodified portable copy, not a summary or a dependency on another user's skill directory. Resolve it relative to this reference. Explanatory answers that do not produce a webpage do not require the design pass.
+For a routine focused review or requested full audit using the existing renderer, use this integration as a short preflight. Read the **complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md)** when changing the template, layout or visual style. The bundled file is a full, unmodified portable copy, not a dependency on another user's skill directory. Resolve it relative to this reference. Explanatory answers that do not produce a webpage do not require the design pass.
 
 ## Apply the design brief honestly
 
-The bundled design skill explicitly excludes dashboards and data tables from its primary landing-page scope. This audit is a private financial document with an exhaustive inventory. Use the user request, audit instructions and [dashboard contract](dashboard-contract.md) to determine scope; apply the design skill's context-relevant guidance to typography, color, spacing, layout, interaction, accessibility and preflight. Its marketing-page prescriptions do not replace the audit's data or delivery requirements.
+The bundled design skill explicitly excludes dashboards and data tables from its primary landing-page scope. This report is a private financial document; its inventory is limited by the declared focused or full-audit scope. Use the user request, audit instructions and [dashboard contract](dashboard-contract.md) to determine scope; apply the design skill's context-relevant guidance to typography, color, spacing, layout, interaction, accessibility and preflight. Its marketing-page prescriptions do not replace the report's data or delivery requirements.
 
 Use a short design read before page work: a calm, precise financial document for reviewing services and deciding what to investigate. Set modest visual variance, minimal motion and enough density to scan a complete inventory. Native CSS and the bundled renderer are the intended foundation for this offline document. Do not introduce React, remote packages, a marketing framework or a server solely to satisfy a landing-page default.
 
 ## Preserve the audit
 
 - Keep the three sections in order: **Current services**, **Refund questions**, **Other issues**. Retain explicit empty states.
-- Show the renderer's evidence-completion status above the inventory. A preliminary report needs a visible label and specific unresolved checks; styling must not imply that source coverage or independent review has passed.
+- Show the renderer's focused, provisional or checked status above the inventory. A focused page states its selected evidence boundary; a provisional full audit lists unresolved checks. Styling must not imply that source coverage or independent review has passed.
 - Keep every discovered or user-named service in the data and accessible in the page, including uncertain, normal and resolved entries. Filters may narrow a view, but show the result count and a clear way to restore all items. Do not replace a complete inventory with selected highlights, a carousel or decorative tiles.
 - Present status/dates and monthly costs as two views of one inventory. Use accessible tabs and shared filters; explain that listed entries include uncertain and historical services. Keep a full-inventory baseline explicitly labeled when filters hide rows.
 - Highlight proactive review leads with words and a semantic color in both views. Show their reason and next check in a separate queue within Refund questions, before specific refund cases. Count leads separately from claims and never style a possible-overlap or usage-unknown signal as confirmed refund eligibility.
@@ -33,11 +33,11 @@ Motion should communicate a state change or feedback and respect reduced-motion 
 
 ## Offline and privacy constraints
 
-The output remains one self-contained HTML document backed by JSON/CSV exports. Use embedded CSS/JavaScript, system fonts or appropriately licensed embedded font data with a fallback. Do not fetch fonts, images, trackers, packages or other assets when the document loads. Explicit source/support links may navigate only when the user follows them. Keep raw email HTML, access tokens and unnecessary identifiers out of the presentation.
+The output remains one self-contained HTML document with supporting JSON; a requested full audit may also have CSV exports. Use embedded CSS/JavaScript, system fonts or appropriately licensed embedded font data with a fallback. Do not fetch fonts, images, trackers, packages or other assets when the document loads. Explicit source/support links may navigate only when the user follows them. Keep raw email HTML, access tokens and unnecessary identifiers out of the presentation.
 
 ## Preflight
 
-Read the bundled preflight in full, then apply each relevant check to this financial-document brief. Mark marketing-only checks as inapplicable with a brief reason; do not add imagery, truncate evidence or convert the page into a landing page merely to tick them.
+For a routine focused review or full audit with the existing renderer, apply the checks below. When changing the template, layout or visual style, read the bundled preflight in full and apply its relevant checks to this financial-document brief. Mark marketing-only checks as inapplicable with a brief reason; do not add imagery, truncate evidence or convert the page into a landing page merely to tick them.
 
 Before delivery, verify:
 

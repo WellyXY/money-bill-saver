@@ -250,10 +250,20 @@ def prepare(report):
 
 def render(report, evidence_path=None, require_checked=False, require_independent_review=False):
     report = prepare(report)
-    spec = importlib.util.spec_from_file_location('audit_gate', Path(__file__).with_name('check_audit.py'))
-    gate = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gate)
-    quality = gate.assess(report, evidence_path, require_independent_review)
+    if report.get('report_mode') == 'focused' and evidence_path is None:
+        if require_independent_review:
+            raise ValueError('A focused review cannot claim independent source review')
+        quality = {
+            'status': 'focused',
+            'summary': 'Selected billing evidence and user-provided leads were considered once. No independent source review was run.',
+            'issues': [],
+            'scope': {'description': report.get('coverage', {}).get('summary', 'Selected billing evidence')},
+        }
+    else:
+        spec = importlib.util.spec_from_file_location('audit_gate', Path(__file__).with_name('check_audit.py'))
+        gate = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gate)
+        quality = gate.assess(report, evidence_path, require_independent_review)
     # Recompute from local evidence and review artifacts; never trust a display flag in the report.
     report['computed']['audit_quality'] = quality
     if require_checked and quality['status'] != 'checked':
