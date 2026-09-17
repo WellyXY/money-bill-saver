@@ -4,17 +4,9 @@ Apply this workflow across merchants. A merchant playbook adds detail; it is nev
 
 ## 1. Find and classify billing evidence
 
-Prefer the user's selected mailbox invoices when an authorized mailbox read tool is available. Inspect the tool's actual search, pagination, message and attachment capabilities. Search the authorized folders and dates using billing concepts and equivalents in the source mailbox's languages: invoice, receipt, payment, subscription, renewal, trial, refund, credit note and cancellation. Also search service lifecycle signals such as welcome, plan confirmation/change, trial completion and expense/payment status updates: these may contain none of the invoice keywords. Include known merchant senders and related billing threads. Complete available result pages and report truncation or inaccessible attachments. Never represent a keyword search as exhaustive mailbox coverage. English report defaults do not restrict the languages of source evidence or searches.
-
-Before making a **no evidence**, **current status** or **latest date** conclusion for a service, close its discovery pass within the authorized account/date scope:
-
-1. Search the brand, actual seller, billing provider and known sender aliases without invoice/receipt or other billing-keyword restrictions. This catches localized statements, cancellation notices and account events. Use source-language terms when narrowing results, including equivalents such as `月結單`, `應付憑據`, `收據` and `已取消` where relevant.
-2. Follow every available result page. Read the relevant full messages and identified invoice/receipt attachments, preserving message and document dates separately. Record the queries, scope, page completion and unread/truncated items in `audit-evidence.json` using [audit-evidence-contract.md](audit-evidence-contract.md). A file-only review records the complete supplied file scope instead of claiming a mailbox search.
-3. Reconcile later cancellation, downgrade, renewal, reinstatement, payment, low-balance and running-resource notices for the same account. Compare invoice service periods to effective state changes. A final bill for earlier usage does not revive a cancelled subscription; account sign-in alone does not prove paid-plan reactivation.
-
-If retrieval is incomplete, label the affected finding provisional and state the specific source gap. Do not replace an unfinished discovery pass with a broad statement that the merchant supplied no invoice or that a service remained active.
-
-Keep every service named by the user in the inventory even when the search finds no receipt. Search its brand, seller and plausible purchase channels within the authorized scope; record an unresolved evidence gap instead of a zero price or an absent service. A marketing announcement can be an account/plan lead, but it does not prove payment or the current account state.
+For a mailbox review, start with [email-search-checklist.md](email-search-checklist.md): select the account/date scope, discover likely billing sources with focused channel queries, then close each merchant's lifecycle search before status/date/absence conclusions.
+The checklist owns query examples, noise reduction and pagination handling. Use host-supported search syntax and record results under [audit-evidence-contract.md](audit-evidence-contract.md).
+Keep user-named services even without receipts; incomplete collection leaves affected conclusions provisional. For file-only work, state the supplied document scope instead of implying a mailbox search.
 
 For multipart email, inspect whether the plain-text part contains meaningful content before dropping an HTML alternative. Empty text, “view in browser” and “HTML not supported” fallbacks require reading the HTML part; preserve its source identity and original content. Before reporting an unreadable message or missing amount, check available body alternatives and attachments. A truncated attachment preview is not a complete read: use the complete extraction or original file and inspect relevant pages. If an attachment download fails, use an available authorized alternative such as the original message's MIME attachment; record remaining failures rather than treating the document as absent.
 
@@ -29,7 +21,7 @@ For multipart email, inspect whether the plain-text part contains meaningful con
 
 Attachments can be PDFs, HTML invoices or CSV exports. HTML may declare Big5 in MIME headers or its own markup. Preserve original bytes, identifiers and amounts; a successful fallback decode is not enough to establish that its text is correct. Keep the generated evidence bundle together when moving it. Use a separate output directory; replacing outputs must preserve all input documents.
 
-If no date range was specified for a mailbox-wide request, propose/use a stated last-13-month window within the user's authorized scope to include annual renewals; follow a user request for all history if supported. Local file reviews cover the supplied documents. A missing mailbox connection does not prevent file-based work: request selected exports while reviewing available evidence. Do not silently substitute samples or claim a mailbox scan.
+### Classify documents and reconcile account state
 
 Classify documents before arithmetic:
 

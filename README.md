@@ -138,15 +138,13 @@ For a mailbox review, specify the account and date range and use an authorized m
 
 Installing the skill alone does not authorize mailbox scanning. A service tool or existing login does not establish access to its invoices, usage or cancellation features.
 
-## Bundled design guidance
+## Context use and design guidance
 
-Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
+`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with payment channels, app stores, card alerts and trial notices, then closes merchant lifecycle searches before conclusions.
 
-The bundled design skill is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) and carries its [MIT license and copyright notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The bundled Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). Original Money Bill Saver material is available under the repository’s [MIT license](LICENSE); these third-party files retain their respective notices.
+Reports use the fixed template. Ordinary runs read the short [webpage preflight](skills/money-bill-saver/references/web-design.md) and only **Section 14: FINAL PRE-FLIGHT CHECK** of the bundled [design-taste-frontend guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check). Its landing-page and framework rules do not override financial evidence or trigger a redesign. The full guide remains available for an explicitly requested redesign.
 
-The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
-
-The page uses native CSS and self-contained assets. Light and dark themes, responsive layouts, readable financial data and accessible controls serve the audit. It does not become a conversion page, truncate the inventory to highlights, or require decorative generated imagery. Private bills and mailbox data are not used to generate decorative images.
+The bundled guide is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), retaining its [MIT notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). Original Money Bill Saver material is available under the repository's [MIT license](LICENSE).
 
 ## Local tools
 
@@ -278,7 +276,7 @@ Browser and visual checks are separate from these automated tests. Use the host'
 ## v0.4.0
 
 - English defaults for reports, interface text, exports, examples and repository documentation, with explicit language overrides.
-- A full portable copy of `design-taste-frontend`, required reading for every audit webpage run.
+- Introduced a full portable copy of `design-taste-frontend`. Ordinary audits now read only its preflight section; see [Context use and design guidance](#context-use-and-design-guidance).
 - Audit-specific design integration that preserves the complete financial inventory, three-section structure, private data and offline delivery.
 - Refined page presentation with theme, responsive-layout and interaction guidance while retaining the existing evidence and cost boundaries.
 
