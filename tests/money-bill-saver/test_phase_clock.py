@@ -1,4 +1,5 @@
 import importlib.util
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import tempfile
 import unittest
@@ -57,6 +58,18 @@ class PhaseClockTests(unittest.TestCase):
             self.assertEqual(replayed["status"], "running")
             self.assertEqual(replayed["phases"][-1]["mode"], "replay")
             self.assertEqual(replayed["elapsed_seconds"], 20)
+
+    def test_completion_artifact_ends_stage_before_parent_acknowledgement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.json"
+            artifact = Path(directory) / "candidate-index.json"
+            started = datetime.now(timezone.utc) - timedelta(seconds=10)
+            clock.begin(path, "test-revision", "live", "six months", "test-model", started.isoformat())
+            artifact.write_text("{}", encoding="utf-8")
+            result = clock.finish(path, "discovery", {"candidates": 0}, artifact=artifact)
+            self.assertEqual(result["status"], "running")
+            self.assertLess(result["phases"][-1]["seconds"], 20)
+            self.assertEqual(result["phases"][-1]["completion_artifact"], str(artifact.resolve()))
 
 
 if __name__ == "__main__":

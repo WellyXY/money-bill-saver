@@ -48,7 +48,7 @@ def begin(path, revision, mode, window, model, now=None):
     return record
 
 
-def finish(path, phase, counts=None, now=None):
+def finish(path, phase, counts=None, now=None, artifact=None):
     record = json.loads(path.read_text(encoding="utf-8"))
     if record.get("status") != "running":
         raise ValueError("Benchmark stopped or completed; resume the failed phase explicitly")
@@ -58,7 +58,17 @@ def finish(path, phase, counts=None, now=None):
         raise ValueError(f"Next phase must be {expected}; do not repeat or skip a phase")
     start = _time(record.get("phase_started_at") or
                   (completed[-1]["ended_at"] if completed else record["started_at"]))
-    end = _time(now)
+    if artifact is not None:
+        if now is not None:
+            raise ValueError("Use either a supplied time or a completion artifact")
+        completion = Path(artifact)
+        if not completion.is_file():
+            raise ValueError("Completion artifact does not exist")
+        end = datetime.fromtimestamp(completion.stat().st_mtime, timezone.utc)
+        if end > _time():
+            raise ValueError("Completion artifact has a future modification time")
+    else:
+        end = _time(now)
     seconds = round((end - start).total_seconds(), 3)
     if seconds < 0:
         raise ValueError("Phase end precedes its start")
@@ -69,6 +79,8 @@ def finish(path, phase, counts=None, now=None):
                              "seconds": seconds, "budget_seconds": budget, "result": state,
                              "mode": record.get("current_mode", record["mode"]),
                              "counts": counts or {}})
+    if artifact is not None:
+        record["phases"][-1]["completion_artifact"] = str(completion.resolve())
     record.pop("phase_started_at", None)
     record["elapsed_seconds"] = effective_elapsed
     record["wall_elapsed_seconds"] = round((end - _time(record["started_at"])).total_seconds(), 3)
@@ -133,6 +145,7 @@ def main():
     next_step.add_argument("--output", required=True, type=Path)
     next_step.add_argument("--phase", required=True, choices=tuple(name for name, _ in PHASES))
     next_step.add_argument("--count", action="append", default=[])
+    next_step.add_argument("--artifact", type=Path, help="Use the completed output file's modification time")
     replay = commands.add_parser("resume")
     replay.add_argument("--output", required=True, type=Path)
     failed = commands.add_parser("mark-failed")
@@ -143,7 +156,7 @@ def main():
         if args.command == "begin":
             result = begin(args.output, args.revision, args.mode, args.window, args.model)
         elif args.command == "finish":
-            result = finish(args.output, args.phase, _counts(args.count))
+            result = finish(args.output, args.phase, _counts(args.count), artifact=args.artifact)
         elif args.command == "mark-failed":
             result = mark_failed(args.output, args.reason)
         else:
