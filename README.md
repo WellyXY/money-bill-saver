@@ -93,7 +93,7 @@ with current services, refund questions and other issues, including costs,
 evidence gaps, next steps and support drafts.
 ```
 
-For a mailbox review, specify the account and date range and use an authorized mail tool available in the current environment. This skill does not bundle a Gmail or Outlook connector. Mail exports and invoice attachments also work. Incomplete source coverage is disclosed in the result.
+For a mailbox review, specify the account and use an authorized mail tool available in the current environment. If no date range is given, the default is the last six calendar months; a user-specified range takes precedence. This skill does not bundle a Gmail or Outlook connector. Mail exports and invoice attachments also work. Incomplete source coverage is disclosed in the result.
 
 Installing the skill alone does not authorize mailbox scanning. A service tool or existing login does not establish access to its invoices, usage or cancellation features.
 

@@ -11,7 +11,7 @@ Default all report copy, HTML interface text, human-readable JSON/CSV fields and
 
 ## Start with the user's task
 
-Infer the mode from the request: **recover** for a particular charge/refund, **manage** for a subscription inventory/renewal/exit decision, **both** for a broad review of bills, waste and refund opportunities. Preserve specified vendors, accounts and dates. If dates are unspecified, use the supplied documents and state their coverage. A broad inventory is optional for a single-charge request. Merchant-specific references supplement the common workflow; their presence never limits which merchants to review.
+Infer the mode from the request: **recover** for a particular charge/refund, **manage** for a subscription inventory/renewal/exit decision, **both** for a broad review of bills, waste and refund opportunities. Preserve specified vendors, accounts and dates. If a mailbox review has no date range, use the last six calendar months and state that coverage; file reviews cover the supplied documents. A broad inventory is optional for a single-charge request. Merchant-specific references supplement the common workflow; their presence never limits which merchants to review.
 
 Use files the user supplied and connectors actually available in the current host within the authorized task. Creation or installation of this skill alone is not authorization to scan a mailbox. If there are no billing inputs, ask for selected invoice PDFs or an authorized billing source; do not substitute sample data for the user's account. While awaiting inputs, explain the minimum evidence for the requested task.
 
