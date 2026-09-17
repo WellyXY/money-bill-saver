@@ -1,0 +1,42 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "money-bill-saver",
+  "version": "0.8.2",
+  "description": "Review bills and subscriptions across merchants, surface evidence-backed billing questions, and prepare support drafts.",
+  "author": {
+    "name": "WellyXY",
+    "url": "https://github.com/WellyXY"
+  },
+  "homepage": "https://wellyxy.github.io/money-bill-saver/",
+  "repository": "https://github.com/WellyXY/money-bill-saver",
+  "keywords": [
+    "subscriptions",
+    "billing",
+    "invoices",
+    "refunds",
+    "personal-finance"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Money Bill Saver",
+        "shortDescription": "Review bills and subscriptions",
+        "longDescription": "Turn supplied or authorized billing evidence into a private, traceable review of current services, refund questions, and other billing issues. The skill checks invoice arithmetic, marks missing evidence, and prepares local support drafts without claiming that a refund is guaranteed.",
+        "developerName": "WellyXY",
+        "category": "Finance",
+        "capabilities": ["Read", "Write"],
+        "websiteURL": "https://wellyxy.github.io/money-bill-saver/",
+        "supportURL": "https://github.com/WellyXY/money-bill-saver/issues",
+        "privacyPolicyURL": "https://wellyxy.github.io/money-bill-saver/privacy.html",
+        "termsOfServiceURL": "https://wellyxy.github.io/money-bill-saver/terms.html",
+        "brandColor": "#173D36",
+        "composerIcon": "./assets/composer-icon.png",
+        "logo": "./assets/logo.png",
+        "defaultPrompt": [
+          "Review the billing files I provide and show current services, refund questions, and other issues with supporting evidence.",
+          "Check this invoice and receipt for arithmetic errors, duplicate payment evidence, and a suitable support request."
+        ]
+      }
+    }
+  }
+}

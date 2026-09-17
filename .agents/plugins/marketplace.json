@@ -1,0 +1,20 @@
+{
+  "name": "money-bill-saver",
+  "interface": {
+    "displayName": "Money Bill Saver Preview"
+  },
+  "plugins": [
+    {
+      "name": "money-bill-saver",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Finance"
+    }
+  ]
+}

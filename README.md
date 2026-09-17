@@ -1,10 +1,38 @@
 # Money Bill Saver
 
-A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
+Turn supplied bills and subscription notices into a private, evidence-linked review of **current services, refund questions, and other billing issues**. Money Bill Saver checks what the records support, shows what remains unknown, and prepares local support drafts when there is a concrete next step. It does not promise a refund or change an account by itself.
+
+[Explore the 50-second interactive tutorial](https://wellyxy.github.io/money-bill-saver/) · [Open the synthetic report](https://wellyxy.github.io/money-bill-saver/example-report.html) · [Try it in Codex](#try-it-in-codex) · [How the audit works](#what-the-audit-delivers)
+
+![Synthetic Money Bill Saver preliminary report showing summary metrics and the current services inventory](docs/assets/report-preview.png)
+
+*The tutorial and preview use fictional services and synthetic billing records. No personal mailbox, bank account, or payment service is connected.*
 
 **Version: v0.8.2 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
+
+## Try it in Codex
+
+This preview is for invited early testers. The repository currently has **no public source-code license**. Contact the maintainer through [GitHub Issues](https://github.com/WellyXY/money-bill-saver/issues) for permission before using or redistributing its contents outside an invitation.
+
+1. In Codex, paste this installation request:
+
+   ```text
+   $skill-installer Install the money-bill-saver skill from https://github.com/WellyXY/money-bill-saver/tree/main/skills/money-bill-saver
+   ```
+
+2. Open a new Codex conversation. To try the workflow without personal data, paste:
+
+   ```text
+   Use $money-bill-saver to render and explain the bundled synthetic example report. Do not access my mailbox or personal files.
+   ```
+
+3. For your own review, provide the bills or other records you choose and define the scope. The skill does not include a mailbox connector or authorize account access merely because it is installed.
+
+If the skill does not appear after installation, restart Codex. [OpenAI's skill guide](https://learn.chatgpt.com/docs/build-skills) describes GitHub installation and skill discovery.
+
+The [interactive HTML tutorial](https://wellyxy.github.io/money-bill-saver/) shows a fictional run step by step. It can be paused, replayed, and navigated with a keyboard. GitHub README files do not run the tutorial's JavaScript, so the animation lives on GitHub Pages.
 
 ## What the audit delivers
 
@@ -77,7 +105,16 @@ An incomplete audit can still be rendered as a clearly labeled preliminary repor
 
 ## Install and use
 
-Copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into your Codex skills directory, usually `~/.codex/skills/`. If `CODEX_HOME` is configured, use its `skills/` directory. Update an existing installation by replacing the same skill directory.
+Use the [invited-tester steps above](#try-it-in-codex) for the simplest installation. For a local manual installation, copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into a [Codex user skill location](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills), such as `~/.agents/skills/`. Update an existing installation by replacing the same skill directory.
+
+Invited testers who want to exercise the plugin packaging can instead add this GitHub repository as a Codex marketplace source and install the preview plugin:
+
+```sh
+codex plugin marketplace add WellyXY/money-bill-saver
+codex plugin add money-bill-saver@money-bill-saver
+```
+
+This GitHub marketplace is a testing source. It is separate from the public ChatGPT and Codex Plugins Directory, which requires [submission and review](https://developers.openai.com/plugins/deploy/submission).
 
 Example request:
 
