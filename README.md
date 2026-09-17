@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.8.1 / Stage 0**
+**Version: v0.8.2 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -103,7 +103,7 @@ The page uses native CSS and self-contained assets. Light and dark themes, respo
 
 ## Local tools
 
-The tools have been tested with Python 3.12. Invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable.
+The tools have been tested with Python 3.12. Invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable. Raw email decoding uses the standard library and reuses the PDF extractor for PDF attachments.
 
 Install the tested dependencies in an isolated environment:
 
@@ -129,6 +129,15 @@ python skills/money-bill-saver/scripts/extract_pdf.py \
   /absolute/path/to/invoice.pdf --output-dir work/extracted
 ```
 
+Decode a saved raw email and its attachments (Gmail RAW JSON or `.eml`):
+
+```sh
+python skills/money-bill-saver/scripts/extract_mime.py \
+  /absolute/path/to/raw-message.json --output-dir work/mail --extract-pdf
+```
+
+The MIME output preserves the original response, decoded attachments and readable derivatives with integrity bindings. Source entries start unread; review them before including their conclusions in an audit. Keep the output bundle together when moving it, and use an output directory separate from the input files. Complete saved tool results are supported; truncated previews must be retrieved again rather than treated as complete messages.
+
 Render the synthetic webpage example:
 
 ```sh
@@ -137,7 +146,7 @@ python skills/money-bill-saver/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-All four tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
+All five tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
 ## Cost and evidence semantics
 
@@ -168,11 +177,18 @@ python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests/money-bill-saver -p 'test_*.py'
 ```
 
-The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
+The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, raw MIME decoding (attachments, legacy charsets, encrypted or mislabeled PDFs, size limits), varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
-Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
+Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. MIME regressions cover truncated messages, inline invoice images, attached messages, HTML charset declarations, PDFs without file extensions, portable PDF manifests, and failed output replacement. Original responses and readable derivatives are checked for modification or omission. These tests verify the gate's behavior; they do not replace factual review of real documents.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.8.2
+
+- `scripts/extract_mime.py` decodes saved raw messages into a full MIME payload, hashed attachments, HTML/CSV text (including Big5) and PDF page text, with suggested evidence entries.
+- The workflow now probes mail tools for a raw single-message format before declaring an attachment unreadable, and falls back to user uploads, connected folders or an authorized browser session.
+- The evidence contract documents how converted messages and part-ID attachments satisfy the completion gate.
+- Raw conversion preserves originals and binds the files used for review; inline images and attached messages remain in the evidence inventory. Truncated MIME is rejected, legacy HTML encoding warnings remain visible, PDF references survive moving the bundle, and failed replacements preserve previous output and source files.
 
 ## v0.8.1
 

@@ -1,7 +1,12 @@
+import base64
 import copy
+from email.message import EmailMessage
+import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,6 +18,9 @@ SCRIPT = ROOT / 'skills/money-bill-saver/scripts/check_audit.py'
 spec = importlib.util.spec_from_file_location('audit_check', SCRIPT)
 audit_check = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit_check)
+mime_spec = importlib.util.spec_from_file_location('audit_test_mime', SCRIPT.with_name('extract_mime.py'))
+mime_extract = importlib.util.module_from_spec(mime_spec)
+mime_spec.loader.exec_module(mime_extract)
 
 
 class AuditCoverageTests(unittest.TestCase):
@@ -69,6 +77,44 @@ class AuditCoverageTests(unittest.TestCase):
             self.review['services'][0]['reviewed_source_ids'].append(sid)
         return sid
 
+    def converted_message(self, reviewed=True, raw=None, source_format='gmail_raw_json', extract_pdf=False):
+        if raw is None:
+            email = EmailMessage()
+            email['From'] = 'billing@acme.example'
+            email['Subject'] = 'Synthetic billing evidence'
+            email.set_content('Synthetic receipt body: USD9.00 due.')
+            email.add_attachment(b'Invoice image bytes', maintype='image', subtype='png',
+                                 filename='invoice.png', disposition='inline', cid='invoice-image')
+            email.add_attachment('amount,currency\n9,USD\n', subtype='csv', filename='invoice.csv')
+            raw = email.as_bytes()
+        source = self.base / ('raw.json' if source_format == 'gmail_raw_json' else 'original.eml')
+        if source_format == 'gmail_raw_json':
+            self.write(source.name, {'structuredContent': {'id': 'converted', 'raw': base64.urlsafe_b64encode(raw).decode()}})
+        else:
+            source.write_bytes(raw)
+        output = self.base / 'mime'
+        result = mime_extract.convert_files([source], output, extract_pdf=extract_pdf)
+        row = result['messages'][0]
+        for entry in row['evidence_sources']:
+            entry = copy.deepcopy(entry)
+            entry['service_ids'] = ['acme']
+            if entry.get('file'):
+                entry['file'] = 'mime/' + entry['file']
+            if reviewed:
+                entry.update(disposition='reviewed', note='Read the saved original, body and associated attachment evidence.')
+                self.review['services'][0]['reviewed_source_ids'].append(entry['id'])
+            self.manifest['sources'].append(entry)
+        self.message_path = output / row['message_file']
+        self.converted_record = json.loads(self.message_path.read_text(encoding='utf-8'))
+        return row
+
+    def save_converted_record(self):
+        self.message_path.write_text(json.dumps(self.converted_record), encoding='utf-8')
+
+    def extracted_file(self, role):
+        entry = next(item for item in self.converted_record['extraction']['files'] if item['role'] == role)
+        return self.message_path.parent / entry['file']
+
     def test_clean_files_review_is_checked_and_preserves_unknown_payment(self):
         original = copy.deepcopy(self.report)
         result = self.assess()
@@ -123,12 +169,196 @@ class AuditCoverageTests(unittest.TestCase):
         self.review['services'][0]['reviewed_source_ids'].append('pdf')
         self.assertEqual(self.assess()['status'], 'checked')
 
-    def test_inline_logo_is_not_an_unreviewed_invoice_attachment(self):
+    def test_inline_logo_requires_explicit_irrelevant_triage(self):
         self.mailbox([{'id': 'abc'}])
         self.message(payload={'mime_type': 'multipart/related', 'parts': [
             {'mime_type': 'image/png', 'filename': 'logo.png', 'headers': [{'name': 'Content-ID', 'value': 'logo'}],
              'body': {'attachment_id': 'logo'}}]})
+        self.assertIn('untriaged_attachment', self.codes(self.assess()))
+        self.manifest['sources'].append({'id': 'logo', 'parent_id': 'gmail:abc', 'attachment_id': 'logo',
+                                         'service_ids': ['acme'], 'kind': 'attachment',
+                                         'disposition': 'irrelevant', 'note': 'Visually confirmed this is only the merchant logo.'})
+        self.review.pop('evidence_sha256', None)
         self.assertNotIn('untriaged_attachment', self.codes(self.assess()))
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_converted_evidence_stays_unread_until_read_and_independently_reviewed(self):
+        self.converted_message(reviewed=False)
+        self.assertIn('unreviewed_source', self.codes(self.assess()))
+        for source in self.manifest['sources'][1:]:
+            source['disposition'] = 'reviewed'
+        self.review.pop('evidence_sha256', None)
+        self.assertIn('incomplete_independent_sources', self.codes(self.assess()))
+        self.review['services'][0]['reviewed_source_ids'] = [source['id'] for source in self.manifest['sources']]
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_converted_inline_invoice_cannot_be_omitted_from_triage(self):
+        self.converted_message()
+        self.manifest['sources'] = [source for source in self.manifest['sources']
+                                    if not source.get('file', '').endswith('invoice.png')]
+        self.assertIn('untriaged_attachment', self.codes(self.assess()))
+
+    def test_converted_original_and_all_derivatives_are_bound(self):
+        self.converted_message()
+        self.assertEqual(self.assess()['status'], 'checked')
+        for role in ('original', 'body_text', 'attachment', 'attachment_text'):
+            with self.subTest(role=role):
+                path = self.extracted_file(role)
+                original = path.read_bytes()
+                path.write_bytes(original + b'Changed evidence')
+                result = self.assess()
+                self.assertEqual(result['status'], 'provisional')
+                self.assertIn('message_extraction_unverified', self.codes(result))
+                self.assertIn('invalid_evidence_digest', self.codes(result))
+                path.write_bytes(original)
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_updating_a_derived_hash_still_invalidates_independent_review(self):
+        self.converted_message()
+        self.assertEqual(self.assess()['status'], 'checked')
+        body = self.extracted_file('body_text')
+        body.write_text('Different extracted body', encoding='utf-8')
+        entry = next(item for item in self.converted_record['extraction']['files'] if item['role'] == 'body_text')
+        entry['sha256'] = hashlib.sha256(body.read_bytes()).hexdigest()
+        self.save_converted_record()
+        self.assertIn('stale_evidence_review', self.codes(self.assess()))
+
+    def test_missing_original_or_derived_file_blocks_even_with_complete_review(self):
+        self.converted_message()
+        self.assertEqual(self.assess()['status'], 'checked')
+        for role in ('original', 'body_text', 'attachment_text'):
+            with self.subTest(role=role):
+                path = self.extracted_file(role)
+                original = path.read_bytes()
+                path.unlink()
+                self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+                path.write_bytes(original)
+
+    def test_extraction_manifest_must_be_complete_and_well_formed(self):
+        self.converted_message()
+        original = copy.deepcopy(self.converted_record)
+        malformed = [None, {}, {'schema_version': '2', 'files': []},
+                     {'schema_version': '1', 'files': []},
+                     {'schema_version': '1', 'files': [None]}]
+        for extraction in malformed:
+            with self.subTest(extraction=extraction):
+                self.converted_record = copy.deepcopy(original)
+                self.converted_record['extraction'] = extraction
+                self.save_converted_record()
+                self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+        for role in ('original', 'body_text', 'attachment', 'attachment_text'):
+            with self.subTest(missing_role=role):
+                self.converted_record = copy.deepcopy(original)
+                self.converted_record['extraction']['files'] = [entry for entry in original['extraction']['files'] if entry['role'] != role]
+                self.save_converted_record()
+                self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+
+    def test_raw_markers_cannot_omit_extraction_contract(self):
+        self.converted_message()
+        del self.converted_record['extraction']
+        self.save_converted_record()
+        self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+        del self.converted_record['source_format']
+        self.save_converted_record()
+        self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+
+    def test_missing_mime_attachment_link_cannot_fake_completed_review(self):
+        self.converted_message()
+        attachment = self.converted_record['payload']['parts'][1]
+        del attachment['body']['file']
+        self.save_converted_record()
+        self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+
+    def test_reviewed_extracted_attachment_cannot_point_at_unrelated_file(self):
+        self.converted_message()
+        self.manifest['sources'][-1]['file'] = 'invoice.txt'
+        self.assertIn('attachment_file_mismatch', self.codes(self.assess()))
+
+    def test_original_gmail_id_must_match_source_and_normalized_message(self):
+        self.converted_message()
+        original = self.extracted_file('original')
+        data = json.loads(original.read_text(encoding='utf-8'))
+        data['structuredContent']['id'] = 'different-original-id'
+        original.write_text(json.dumps(data), encoding='utf-8')
+        entry = next(item for item in self.converted_record['extraction']['files'] if item['role'] == 'original')
+        entry['sha256'] = hashlib.sha256(original.read_bytes()).hexdigest()
+        self.save_converted_record()
+        self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+
+    def test_extracted_file_paths_cannot_escape_or_refer_to_message_itself(self):
+        self.converted_message()
+        original = copy.deepcopy(self.converted_record)
+        outside = self.base / 'invoice.txt'
+        for name in (str(outside), '../invoice.txt', 'message.json', 'attachments/../body.txt'):
+            with self.subTest(name=name):
+                self.converted_record = copy.deepcopy(original)
+                self.converted_record['extraction']['files'][0]['file'] = name
+                self.save_converted_record()
+                self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+        self.converted_record = original
+        body = self.extracted_file('body_text')
+        body.unlink()
+        body.symlink_to(outside)
+        self.save_converted_record()
+        self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+
+    def test_complete_extracted_bundle_can_be_relocated_without_invalidating_review(self):
+        self.converted_message(source_format='rfc822')
+        self.assertEqual(self.assess()['status'], 'checked')
+        with tempfile.TemporaryDirectory() as destination:
+            moved = Path(destination) / 'moved'
+            shutil.copytree(self.base, moved)
+            self.assertEqual(audit_check.assess(self.report, moved / 'audit-evidence.json')['status'], 'checked')
+            self.assertEqual(audit_check.evidence_digest(self.base / 'audit-evidence.json'),
+                             audit_check.evidence_digest(moved / 'audit-evidence.json'))
+
+    def test_nested_message_and_inline_invoice_keep_distinct_review_requirements(self):
+        forwarded = EmailMessage()
+        forwarded.set_content('Forwarded billing body')
+        forwarded.add_attachment(b'Inline forwarded invoice', maintype='image', subtype='png',
+                                 disposition='inline', cid='forwarded-invoice')
+        outer = EmailMessage()
+        outer.set_content('Please see the original receipt below.')
+        outer.add_attachment(forwarded)
+        self.converted_message(raw=outer.as_bytes())
+        self.assertEqual(self.assess()['status'], 'checked')
+        attachments = [source for source in self.manifest['sources'] if source['kind'] == 'attachment']
+        self.assertEqual(len(attachments), 2)
+        self.assertEqual(len({source['part_id'] for source in attachments}), 2)
+        self.manifest['sources'].remove(attachments[-1])
+        self.assertIn('untriaged_attachment', self.codes(self.assess()))
+
+    def test_pdf_manifest_and_extracted_pages_are_bound_and_relocatable(self):
+        from reportlab.pdfgen import canvas
+
+        buffer = io.BytesIO()
+        pdf = canvas.Canvas(buffer)
+        pdf.drawString(40, 700, 'Synthetic invoice amount due USD9.00; no payment confirmed.')
+        pdf.save()
+        email = EmailMessage()
+        email.set_content('The invoice is attached.')
+        email.add_attachment(buffer.getvalue(), maintype='application', subtype='pdf', filename='invoice.pdf')
+        self.converted_message(raw=email.as_bytes(), extract_pdf=True)
+        self.assertEqual(self.assess()['status'], 'checked')
+        with tempfile.TemporaryDirectory() as destination:
+            moved = Path(destination) / 'moved'
+            shutil.copytree(self.base, moved)
+            self.assertEqual(audit_check.assess(self.report, moved / 'audit-evidence.json')['status'], 'checked')
+        for role in ('pdf_manifest', 'attachment_text'):
+            with self.subTest(role=role):
+                target = self.extracted_file(role)
+                original = target.read_bytes()
+                target.write_bytes(original + b'Changed PDF extraction')
+                self.assertIn('message_extraction_unverified', self.codes(self.assess()))
+                target.write_bytes(original)
+
+    def test_decoding_warning_can_be_resolved_by_reading_and_independent_review(self):
+        raw = (b'Content-Type: text/plain; charset=does-not-exist\r\n'
+               b'Content-Transfer-Encoding: base64\r\n\r\n' +
+               base64.b64encode(b'Synthetic billing body with a charset warning.') + b'\r\n')
+        self.converted_message(raw=raw)
+        self.assertTrue(self.converted_record['extraction']['decoding_warnings'])
+        self.assertEqual(self.assess()['status'], 'checked')
 
     def test_truncated_pagination_blocks(self):
         self.mailbox(next_token='page2')
