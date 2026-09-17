@@ -1,0 +1,76 @@
+import importlib.util
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+import tempfile
+import unittest
+
+
+SCRIPT = Path(__file__).resolve().parents[2] / "skills/money-bill-saver/scripts/phase_clock.py"
+spec = importlib.util.spec_from_file_location("phase_clock", SCRIPT)
+clock = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(clock)
+
+
+class PhaseClockTests(unittest.TestCase):
+    def test_stops_at_failed_stage_without_restarting_or_advancing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.json"
+            clock.begin(path, "test-revision", "replay", "six months", "test-model", "2026-09-17T00:00:00Z")
+            first = clock.finish(path, "discovery", {"candidates": 20}, "2026-09-17T00:02:20Z")
+            self.assertEqual(first["status"], "running")
+            stopped = clock.finish(path, "evidence", {"material_messages": 4}, "2026-09-17T00:07:00Z")
+            self.assertEqual(stopped["status"], "stop")
+            self.assertEqual(stopped["phases"][-1]["result"], "over_budget")
+            with self.assertRaisesRegex(ValueError, "stopped or completed"):
+                clock.finish(path, "report", now="2026-09-17T00:07:01Z")
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                clock.begin(path, "new", "replay", "six months", "test-model")
+            clock.resume(path, "2026-09-17T01:00:00Z")
+            recovered = clock.finish(path, "evidence", {"material_messages": 3}, "2026-09-17T01:04:00Z")
+            self.assertEqual(recovered["status"], "running")
+            self.assertEqual([row["result"] for row in recovered["phases"]],
+                             ["within_budget", "over_budget", "within_budget"])
+            self.assertEqual(recovered["elapsed_seconds"], 380)
+            self.assertEqual(recovered["phases"][-1]["mode"], "replay")
+
+    def test_records_all_phases_and_actual_overall_elapsed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.json"
+            clock.begin(path, "test-revision", "replay", "six months", "test-model", "2026-09-17T00:00:00Z")
+            for phase, end in (("discovery", "00:02:00"), ("evidence", "00:06:00"),
+                               ("report", "00:08:00"), ("preview", "00:08:20")):
+                result = clock.finish(path, phase, now=f"2026-09-17T{end}Z")
+            self.assertEqual(result["status"], "completed")
+            self.assertEqual(result["elapsed_seconds"], 500)
+            self.assertEqual([row["phase"] for row in result["phases"]],
+                             ["discovery", "evidence", "report", "preview"])
+
+    def test_failed_output_stops_even_when_stage_is_fast(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.json"
+            clock.begin(path, "test-revision", "live", "six months", "test-model", "2026-09-17T00:00:00Z")
+            clock.finish(path, "discovery", {"candidates": 20}, "2026-09-17T00:01:00Z")
+            failed = clock.mark_failed(path, "candidate index missing")
+            self.assertEqual(failed["status"], "stop")
+            self.assertEqual(failed["phases"][-1]["result"], "failed_check")
+            clock.resume(path, "2026-09-17T01:00:00Z")
+            replayed = clock.finish(path, "discovery", {"candidates": 20}, "2026-09-17T01:00:20Z")
+            self.assertEqual(replayed["status"], "running")
+            self.assertEqual(replayed["phases"][-1]["mode"], "replay")
+            self.assertEqual(replayed["elapsed_seconds"], 20)
+
+    def test_completion_artifact_ends_stage_before_parent_acknowledgement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.json"
+            artifact = Path(directory) / "candidate-index.json"
+            started = datetime.now(timezone.utc) - timedelta(seconds=10)
+            clock.begin(path, "test-revision", "live", "six months", "test-model", started.isoformat())
+            artifact.write_text("{}", encoding="utf-8")
+            result = clock.finish(path, "discovery", {"candidates": 0}, artifact=artifact)
+            self.assertEqual(result["status"], "running")
+            self.assertLess(result["phases"][-1]["seconds"], 20)
+            self.assertEqual(result["phases"][-1]["completion_artifact"], str(artifact.resolve()))
+
+
+if __name__ == "__main__":
+    unittest.main()

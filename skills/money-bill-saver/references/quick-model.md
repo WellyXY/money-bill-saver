@@ -1,0 +1,33 @@
+# Focused report input (`quick-1`)
+
+The default fast path uses `quick.json`, a small decisions file. The collection step saves source IDs and metadata in one local `source_index` file; the report author cites those IDs, writes only current services and actionable questions, and leaves non-actionable purchases in a short appendix. The script derives the four fixed webpage sections and monthly totals. It does **not** perform source inspection, invoice reconciliation, independent review, or mailbox discovery. Label the page **Focused review**; an absent item or amount means unknown within the declared scope.
+
+```sh
+python scripts/build_quick_report.py --input /private/run/quick.json --output-dir /private/run
+```
+
+The script writes `dashboard.json` and self-contained `dashboard.html`. To intentionally replace only those two generated files, add `--force`. Keep `quick.json`, any `source_index`, and the generated page in the same private output directory. See `assets/example-quick.json` for a runnable synthetic input. The `quick-1` input is much smaller than the optional `audit-1` input; do not create empty invoice/event records to satisfy a schema. After the first page passes preview, deliver it and stop. A later detailed verification is a separate user-requested run.
+
+## Required top level
+
+- `schema_version: "quick-1"`, ISO `as_of`, and `scope: {description, limitations?, timezone?}`. Say which accounts, categories, and dates were searched and what remains unknown. Timezone defaults to UTC; use the account's IANA timezone when including precise event timestamps.
+- `services`: one row per service whose current or recent subscription state matters. `cases`: actionable one-time billing issues only. `appendix`: optional compact one-time/non-actionable groups.
+- `sources`: optional inline source metadata and/or `source_index`: relative path to a saved `{sources:[...]}` inventory or MIME `{messages:[{evidence_sources:[...]}]}` manifest. A cited ID must exist in one of them. Keep source originals available separately; this fast builder only checks IDs and does not certify that the original says what the decision claims.
+
+## Service or case row
+
+Required: `id`, `name`, `vendor`, `account_ref` (null when unknown), `status` (`observed`, `uncertain`, `user_reported`, `historical`), `status_note`, and `source_refs` (may be empty only when status is not observed). Use stable private account aliases. The report does not infer active status from a receipt. Optional: `plan`, `category`, `status_label`, `priority`, `unknowns`, `dates`, `cost`, `issue`, `action`, and local `drafts`. `overlap` is available on service rows only.
+
+`dates` may include `last_invoice`, `last_charge`, `next_renewal`; each dated field is `{date, source_refs, note?}`. Dates must be explicit event dates in cited evidence. `last_invoice` is the invoice issue date; `last_charge` is a successful **cash payment** date, not the invoice or email date; `next_renewal` is a currently stated future schedule, not a rolled-forward service-period end. Omit a field when unknown. A documented disabled renewal is `next_renewal: {disabled: true, source_refs, note}`. Date-only and timezone-qualified timestamps are allowed. The builder does not extract dates or resolve conflicting messages.
+
+`cost` is `{kind, amount?, currency?, source_refs?, note?, include_monthly?, basis?, months?, unknown_note?}`. `kind` is `unknown`, `fixed_monthly`, `fixed_term`, `base_plus_usage`, `prepaid`, `variable`, or `invoice_total`. Only an **observed current service** with an explicitly sourced recurring amount and `include_monthly: true` enters the monthly baseline. For a fixed term, supply its positive `months`; for a monthly plan the default is one. `basis` explains why the number is a current recurring price. A one-off invoice total can appear as `invoice_total` but cannot silently become a monthly price. Unknown usage remains visible via `unknown_note`. The monthly baseline is per currency; there is no FX conversion.
+
+`issue` is `{group, title, summary, next, source_refs}` with `group: "refund"` or `"other"`. The issue adds a row to the corresponding queue. Refund issues also require `amount_label`, such as `USD 7.00 to verify` or `Amount unknown`; optional `eligibility` defaults to `unverified`, and `missing` lists evidence still needed. The builder never calls an item refundable from overlap, inactivity, or an invoice alone. Leave `issue` absent if there is no specific action. A case row must have an issue. Drafts are optional `{title, condition, text, source_refs}` and stay local.
+
+`action` may contain `url` and optional `link_label`. It adds a clickable account/status entry to the existing next-step area, even when the row has no issue. Use an already known official **public account or billing entry** as a likely destination; an unverified entry should say so in its label. The quick builder accepts a public HTTPS domain root or a simple static account path, such as `https://billing.example.com/account`. It rejects login credentials, ports, private IDs in paths, query strings and fragments so tokenized account links cannot leak into the page. Do not invent an official domain merely to fill this field. The link is navigation help, not evidence that the account is active or a task has been submitted.
+
+`overlap` is an optional list of brief functional-overlap leads for a service. Each lead has `peer_ids` (one or more other listed service IDs), `reason`, `next_check`, optional `tentative_keep_id` (the service ID tentatively worth retaining), and optional `source_refs`. Example: `{"peer_ids":["assistant-b"],"reason":"Both may cover the same drafting workflow.","tentative_keep_id":"assistant-a","next_check":"Compare actual weekly use, needed features and cancellation dependencies."}`. A plausible shared job is enough to show a **possible overlap** prompt; do not wait for a full usage audit. If a keep-one preference is reasonable, show it as tentative and explain why in `reason`. If there is no basis to choose, omit `tentative_keep_id` and invite comparison. The generated prompt identifies missing verification and never creates a refund claim or savings amount. Enter a pair once, on one service row, to avoid duplicate prompts.
+
+Each appendix entry is `{name, note, source_refs, category?}`; group many harmless one-time purchases into one line when a count and description are supported by those references. Do not author individual detailed case records for every receipt.
+
+The generated `dashboard.json` has `report_mode: "focused"`; it has no independent review certification. The optional `audit-1` path remains available when the user explicitly requests a complete evidence audit.
