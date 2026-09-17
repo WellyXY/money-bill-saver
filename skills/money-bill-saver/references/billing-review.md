@@ -27,7 +27,7 @@ Attachment retrieval order:
 
 Attachments can be PDFs, HTML invoices (common for Taiwanese e-invoices, often Big5) or CSV exports. Use the decoded text; keep original identifiers and amounts exactly as printed.
 
-If no date range was specified for a mailbox-wide request, propose/use a stated last-13-month window within the user's authorized scope to include annual renewals; follow a user request for all history if supported. Local file reviews cover the supplied documents. A missing mailbox connection does not prevent file-based work: request selected exports while reviewing available evidence. Do not silently substitute samples or claim a mailbox scan.
+If no date range was specified for a mailbox review, use a stated window covering the last six calendar months within the user's authorized scope. Follow a user-specified period or a request for all history if supported. This default window may miss an annual bill or renewal outside it; state that evidence gap instead of treating the service as absent or its current state as confirmed. Local file reviews cover the supplied documents. A missing mailbox connection does not prevent file-based work: request selected exports while reviewing available evidence. Do not silently substitute samples or claim a mailbox scan.
 
 Classify documents before arithmetic:
 

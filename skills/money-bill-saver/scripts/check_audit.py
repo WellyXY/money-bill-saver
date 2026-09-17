@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Check declared audit coverage and a review bound to the final service rows.
+"""Check declared audit coverage, and an optional review bound to the final rows.
 
-This is a completion gate, not a payment classifier or a guarantee of truth.
+Evidence coverage is the always-required gate. Independent review is opt-in: it
+runs when the manifest declares an ``independent_review_file`` or when the caller
+passes ``require_independent_review``. This is a completion gate, not a payment
+classifier or a guarantee of truth.
 """
 import argparse
 from datetime import date, datetime
@@ -115,9 +118,11 @@ def _missing_text_parts(part):
     return missing
 
 
-def _assess(report, evidence_path=None):
+def _assess(report, evidence_path=None, require_independent_review=False):
     """Return checked/provisional; malformed evidence never marks a report checked."""
     issues = []
+    review_state = 'not_requested'
+
     counts = {'services': 0, 'other_cases': 0, 'entities': 0, 'searches': 0, 'search_results': 0,
               'sources': 0, 'reviewed_sources': 0, 'independently_reviewed_services': 0,
               'independently_reviewed_entities': 0}
@@ -132,10 +137,18 @@ def _assess(report, evidence_path=None):
 
     def finish():
         checked = not issues
+        if checked and review_state == 'passed':
+            summary = ('Declared evidence coverage and independent service review passed; '
+                       'account completeness and factual accuracy are not guaranteed.')
+        elif checked:
+            summary = ('Declared evidence coverage passed; no independent review was run, and '
+                       'account completeness and factual accuracy are not guaranteed.')
+        elif review_state == 'not_requested':
+            summary = 'Provisional: evidence coverage is incomplete.'
+        else:
+            summary = 'Provisional: evidence coverage or independent review is incomplete.'
         return {'status': 'checked' if checked else 'provisional',
-                'summary': ('Declared evidence coverage and independent service review passed; '
-                            'account completeness and factual accuracy are not guaranteed.' if checked
-                            else 'Provisional: evidence coverage or independent review is incomplete.'),
+                'summary': summary, 'independent_review': review_state,
                 'issues': issues, 'counts': counts, 'scope': scope}
 
     services = report.get('subscriptions') if isinstance(report, dict) else None
@@ -361,7 +374,13 @@ def _assess(report, evidence_path=None):
     if scope and scope['mode'] == 'files' and not source_map:
         add('empty_file_scope', 'Files-only review must declare the supplied sources.')
 
-    review = local_file(manifest.get('independent_review_file'), 'independent_review_file', parse=True)
+    declared_review = manifest.get('independent_review_file')
+    if declared_review is None and not require_independent_review:
+        # Independent review is user-triggered. Evidence coverage alone decides the gate.
+        return finish()
+    review_state = 'incomplete'
+    before_review = len(issues)
+    review = local_file(declared_review, 'independent_review_file', parse=True)
     if not isinstance(review, dict) or not _text(review.get('reviewer')) or not isinstance(review.get('services'), list) or not isinstance(review.get('issues'), list):
         add('missing_independent_review', 'Independent review needs reviewer, services[], and issues[].')
         return finish()
@@ -411,16 +430,19 @@ def _assess(report, evidence_path=None):
             add('invalid_independent_issue', 'Independent issue needs a message.')
         elif issue.get('blocking', True) is not False:
             add('independent_blocking_issue', issue['message'], issue.get('service_id'))
+    if len(issues) == before_review:
+        review_state = 'passed'
     return finish()
 
 
-def assess(report, evidence_path=None):
+def assess(report, evidence_path=None, require_independent_review=False):
     """Treat malformed manifests as provisional instead of crashing callers."""
     try:
-        return _assess(report, evidence_path)
+        return _assess(report, evidence_path, require_independent_review)
     except (TypeError, ValueError, KeyError, AttributeError, UnicodeError, RecursionError) as exc:
         return {'status': 'provisional',
                 'summary': 'Provisional: the evidence manifest could not be validated.',
+                'independent_review': 'unknown',
                 'issues': [{'code': 'invalid_evidence_manifest', 'message': str(exc)}],
                 'counts': {}, 'scope': None}
 
@@ -431,6 +453,8 @@ def main():
     parser.add_argument('--evidence', help='audit-evidence.json path')
     parser.add_argument('--output', required=True, help='Write audit-check.json here')
     parser.add_argument('--force', action='store_true', help='Replace an existing check output')
+    parser.add_argument('--require-independent-review', action='store_true',
+                        help='Require an independent review even when the manifest declares none')
     args = parser.parse_args()
     try:
         output = Path(args.output)
@@ -441,7 +465,7 @@ def main():
         renderer = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(renderer)
         report = renderer.prepare(report)
-        result = assess(report, args.evidence)
+        result = assess(report, args.evidence, args.require_independent_review)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(result['summary'])
