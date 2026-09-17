@@ -1,9 +1,9 @@
 ---
-name: subscription-audit
+name: money-bill-saver
 description: Review bills, invoices, receipts and subscriptions across merchants for overcharges, duplicate payments, unwanted renewals, unused services and missing benefits. Use billing emails, PDFs, payment or usage evidence to prepare refund, correction, benefit-restoration, downgrade or cancellation drafts.
 ---
 
-# Subscription Audit
+# Money Bill Saver
 
 Stage 0: review every merchant and bill type present in the user's selected evidence, then produce explainable findings and actionable drafts. An audit delivers a private visual web document with three sections in order: **current services**, **refund questions**, and **other issues**. Cover fixed subscriptions, usage bills, annual memberships, trials that became paid, app-store purchases, telecom/utilities and one-time purchases. Retain supporting data and local drafts. No product account, product backend or dedicated mailbox connector is required.
 

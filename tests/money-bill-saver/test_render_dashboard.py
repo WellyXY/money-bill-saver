@@ -7,7 +7,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location('dashboard', ROOT / 'skills/subscription-audit/scripts/render_dashboard.py')
+spec = importlib.util.spec_from_file_location('dashboard', ROOT / 'skills/money-bill-saver/scripts/render_dashboard.py')
 dashboard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(dashboard)
 

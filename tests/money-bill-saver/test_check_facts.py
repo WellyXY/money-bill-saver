@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 
-SCRIPT = Path(__file__).resolve().parents[2] / "skills/subscription-audit/scripts/check_facts.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "skills/money-bill-saver/scripts/check_facts.py"
 spec = importlib.util.spec_from_file_location("check_facts", SCRIPT)
 checker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(checker)

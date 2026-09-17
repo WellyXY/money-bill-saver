@@ -1,8 +1,8 @@
-# Subscription Audit
+# Money Bill Saver
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.8.0 / Stage 0**
+**Version: v0.8.1 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -63,12 +63,12 @@ Before concluding that invoices, payments or later account changes are missing, 
 
 New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
 
-The executable gate checks collection closure, unreviewed records, attachment coverage, review findings and stale bindings. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/subscription-audit/references/audit-evidence-contract.md):
+The executable gate checks collection closure, unreviewed records, attachment coverage, review findings and stale bindings. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
 
 ```sh
-python skills/subscription-audit/scripts/check_audit.py \
+python skills/money-bill-saver/scripts/check_audit.py \
   --report dashboard.json --evidence audit-evidence.json --output audit-checks.json
-python skills/subscription-audit/scripts/render_dashboard.py \
+python skills/money-bill-saver/scripts/render_dashboard.py \
   --input dashboard.json --evidence audit-evidence.json \
   --require-checked --output dashboard.html
 ```
@@ -77,12 +77,12 @@ An incomplete audit can still be rendered as a clearly labeled preliminary repor
 
 ## Install and use
 
-Copy this repository's [`skills/subscription-audit`](skills/subscription-audit) directory into your Codex skills directory, usually `~/.codex/skills/`. If `CODEX_HOME` is configured, use its `skills/` directory. Update an existing installation by replacing the same skill directory.
+Copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into your Codex skills directory, usually `~/.codex/skills/`. If `CODEX_HOME` is configured, use its `skills/` directory. Update an existing installation by replacing the same skill directory.
 
 Example request:
 
 ```text
-Use $subscription-audit to review all bills I supply or authorize you to read.
+Use $money-bill-saver to review all bills I supply or authorize you to read.
 Investigate possible overcharges, duplicate payments, unused services,
 unwanted renewals and missing benefits. Deliver an English offline webpage
 with current services, refund questions and other issues, including costs,
@@ -95,7 +95,7 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 ## Bundled design guidance
 
-Every audit webpage run must read the integration in [`web-design.md`](skills/subscription-audit/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/subscription-audit/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
+Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
 
 The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
 
@@ -117,23 +117,23 @@ Check the synthetic invoice example:
 
 ```sh
 mkdir -p work
-python skills/subscription-audit/scripts/check_facts.py \
-  --input skills/subscription-audit/assets/example-facts.json \
+python skills/money-bill-saver/scripts/check_facts.py \
+  --input skills/money-bill-saver/assets/example-facts.json \
   --output work/example-checks.json
 ```
 
 Extract a PDF supplied for the audit:
 
 ```sh
-python skills/subscription-audit/scripts/extract_pdf.py \
+python skills/money-bill-saver/scripts/extract_pdf.py \
   /absolute/path/to/invoice.pdf --output-dir work/extracted
 ```
 
 Render the synthetic webpage example:
 
 ```sh
-python skills/subscription-audit/scripts/render_dashboard.py \
-  --input skills/subscription-audit/assets/example-dashboard.json \
+python skills/money-bill-saver/scripts/render_dashboard.py \
+  --input skills/money-bill-saver/assets/example-dashboard.json \
   --output work/dashboard.html
 ```
 
@@ -165,7 +165,7 @@ Original source text and identifiers are preserved. English summaries or transla
 
 ```sh
 python -m pip install -r requirements-dev.txt
-python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
+python -m unittest discover -s tests/money-bill-saver -p 'test_*.py'
 ```
 
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
@@ -173,6 +173,11 @@ The synthetic test suite covers decimal arithmetic, document identity and duplic
 Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.8.1
+
+- Renamed the repository, Skill folder, invocation and report brand to Money Bill Saver (`money-bill-saver`).
+- Existing installations should use the new folder and invocation shown above.
 
 ## v0.8.0
 
@@ -224,11 +229,11 @@ Mailbox discovery can be incomplete, and a current service inventory may require
 
 ## Reference files
 
-- [Skill entry point](skills/subscription-audit/SKILL.md)
-- [Common billing review](skills/subscription-audit/references/billing-review.md)
-- [Facts and outcomes contract](skills/subscription-audit/references/facts-contract.md)
-- [Deliverables](skills/subscription-audit/references/deliverables.md)
-- [Dashboard data contract](skills/subscription-audit/references/dashboard-contract.md)
-- [Evidence and completion gate contract](skills/subscription-audit/references/audit-evidence-contract.md)
-- [Web design integration](skills/subscription-audit/references/web-design.md)
-- [Bundled design skill](skills/subscription-audit/references/design-taste-frontend/SKILL.md)
+- [Skill entry point](skills/money-bill-saver/SKILL.md)
+- [Common billing review](skills/money-bill-saver/references/billing-review.md)
+- [Facts and outcomes contract](skills/money-bill-saver/references/facts-contract.md)
+- [Deliverables](skills/money-bill-saver/references/deliverables.md)
+- [Dashboard data contract](skills/money-bill-saver/references/dashboard-contract.md)
+- [Evidence and completion gate contract](skills/money-bill-saver/references/audit-evidence-contract.md)
+- [Web design integration](skills/money-bill-saver/references/web-design.md)
+- [Bundled design skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md)

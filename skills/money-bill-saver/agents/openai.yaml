@@ -1,0 +1,4 @@
+interface:
+  display_name: "Money Bill Saver"
+  short_description: "Audit services, refund questions and billing issues"
+  default_prompt: "Use $money-bill-saver to review my supplied or authorized bills and deliver an English offline webpage with current services, refund questions and other issues, including costs, evidence, next steps and support drafts."

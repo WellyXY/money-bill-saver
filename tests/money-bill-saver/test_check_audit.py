@@ -9,7 +9,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / 'skills/subscription-audit/scripts/check_audit.py'
+SCRIPT = ROOT / 'skills/money-bill-saver/scripts/check_audit.py'
 spec = importlib.util.spec_from_file_location('audit_check', SCRIPT)
 audit_check = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit_check)

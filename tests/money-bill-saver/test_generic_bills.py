@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[2] / "skills/subscription-audit/scripts/check_facts.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "skills/money-bill-saver/scripts/check_facts.py"
 SPEC = importlib.util.spec_from_file_location("generic_bills_checker", SCRIPT)
 checker = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(checker)

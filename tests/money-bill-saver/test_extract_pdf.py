@@ -14,7 +14,7 @@ from reportlab.pdfgen import canvas
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "skills/subscription-audit/scripts/extract_pdf.py"
+SCRIPT = ROOT / "skills/money-bill-saver/scripts/extract_pdf.py"
 spec = importlib.util.spec_from_file_location("subscription_extract_pdf", SCRIPT)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
