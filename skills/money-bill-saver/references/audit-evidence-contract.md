@@ -62,6 +62,8 @@ Search entries must use `result_file`; source entries must use `file`. A source-
 
 If a result contains a next-page token, record the next request with the **same query**, `request_page_token` equal to that exact token, and its own `result_file`. Continue until the raw result has no next-page token. Missing, orphaned, disconnected or cyclic pages fail. Every returned message ID must have a source entry and a reason, regardless of subject language. IDs may be the raw Gmail ID or `gmail:` followed by that ID.
 
+Independent queries may run concurrently. Preserve each query's page-token chain and raw results separately, then deduplicate returned messages by mailbox and message ID before source triage; concurrent execution does not relax the completion checks. The current manifest represents service-scoped searches; retain account-wide candidate searches as separate discovery records, then associate merchant searches and sources with real report services or cases. Do not fabricate `service_ids` for an empty inventory.
+
 `service_ids` associates a search or source with IDs from either report `subscriptions` or `other_cases`. Other cases, including deposits and pending refunds, must not bypass the gate. For a search covering multiple services or cases, triage every returned message for that entire declared set; split searches when that association is too broad. Search entries are not a claim that a receipt or a refund exists.
 
 ## Source dispositions and attachments
