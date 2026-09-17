@@ -16,7 +16,7 @@ Counts describe their denominator: “14 services and leads” means 14 inventor
 
 ## Render
 
-Every audit webpage run must first read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). The integration preserves this contract's financial semantics, three sections, complete inventory and private offline output.
+Use the fixed renderer. Before delivery, follow the short [webpage preflight](web-design.md), which reads only Section 14 of the bundled design guide for ordinary audits. This contract governs financial semantics and data fields.
 
 Resolve the script and input/output paths from the installed skill and task directory:
 
