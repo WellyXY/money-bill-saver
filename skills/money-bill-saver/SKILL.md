@@ -17,9 +17,11 @@ Use files the user supplied and connectors actually available in the current hos
 
 Briefly report available sources, covered accounts/periods and missing signals. Billing access, service activity and payment evidence are separate capabilities. A configured vendor tool does not imply it exposes invoices or cancellation. Work from available evidence and request only missing information that changes the conclusion or proposed action.
 
-## Default: focused review
+## Default: focused review (ten-minute target)
 
 Unless the user explicitly asks for an exhaustive audit, deliver one focused private webpage from selected billing evidence. This is a single review, not a claim that the entire mailbox or every merchant account was verified. The default mailbox window remains six calendar months in the selected timezone. Record the account, dates, searched folders, query coverage and material unread sources. Keep each user-named service visible even if its paid state is unknown.
+
+Aim to hand over the first useful page within ten minutes: discovery 150 seconds, decisive evidence 270 seconds, decisions and build 150 seconds, preview 30 seconds. These are planning budgets, not permission to omit a known material contradiction. When the scope exceeds a budget, show the unresolved gap in the focused page instead of silently widening the search.
 
 1. **Discover and index candidates.** Use the high-signal billing searches and named-merchant checks in [email-search-checklist.md](references/email-search-checklist.md). Prefer authorized search results with ID, sender, subject, date, snippet and attachment flag. Save search pages once, deduplicate and group them with [index_mail_candidates.py](scripts/index_mail_candidates.py), and triage metadata before reading message bodies. Page selected searches to completion; if a page is missing, label coverage incomplete. Avoid broad generic payment-word searches and full MIME reads just to identify a sender. Parallelize independent short searches in the coordinating agent.
 2. **Read decisive evidence.** For each likely current service, read its latest material invoice or receipt; read older records for a price change, contradiction or specific question. For disputed charges, cancellation, credit or refund, search the merchant's later replies without requiring billing keywords, then read relevant bodies and attachments. Keep source IDs behind displayed facts. Do not turn a receipt into a confirmed current paid subscription or a successful charge without supporting evidence.
