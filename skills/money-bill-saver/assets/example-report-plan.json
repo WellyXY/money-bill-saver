@@ -1,0 +1,124 @@
+{
+  "report": {
+    "title": "Synthetic billing review",
+    "intro": "A synthetic example of the compact plan that scripts/build_report.py expands into dashboard.json.",
+    "as_of": "2030-01-01",
+    "status_boundary": "Status reflects the supplied synthetic documents, not a live account.",
+    "cost_boundary": "The fixed monthly subtotal counts only observed fixed monthly prices.",
+    "coverage": {
+      "summary": "Two synthetic invoices and one synthetic support reply.",
+      "notes": ["No mailbox search was performed for this example.", "Example data only; it does not represent a real account."]
+    },
+    "footer_note": "Synthetic demonstration data."
+  },
+  "monthly_cost": {
+    "note": "Known current cost equivalents from the synthetic invoices only; usage and taxes are excluded."
+  },
+  "services": [
+    {
+      "id": "sample-monthly",
+      "name": "Sample Monthly Tool",
+      "category": "Productivity software",
+      "plan": "Team",
+      "status": "observed",
+      "status_label": "Paid monthly term covers the example date",
+      "status_note": "The latest synthetic invoice is dated 2029-12-01 and no later cancellation appears in the supplied files.",
+      "cost": {
+        "label": "USD 12.00 per month",
+        "note": "Account plan price stated on the synthetic invoice.",
+        "kind": "fixed_monthly",
+        "amount": "12.00",
+        "currency": "USD"
+      },
+      "monthly": {
+        "amount": "12.00",
+        "currency": "USD",
+        "months": 1,
+        "basis": "Monthly plan price on the synthetic invoice; no usage add-ons are included.",
+        "sources": ["sample-invoice-1"]
+      },
+      "dates": {
+        "last_invoice": {"date": "2029-12-01", "note": "Issue date printed on the synthetic invoice.", "sources": ["sample-invoice-1"]},
+        "last_charge": {"note": "No successful payment is evidenced in the supplied files."},
+        "next_renewal": {"date": "2030-01-01", "status": "estimated", "note": "Monthly cadence inferred from two synthetic invoices; not a merchant notice.", "sources": ["sample-invoice-1"]}
+      },
+      "issue": {"title": "No open issue", "summary": "The plan price and period reconcile with the supplied invoice."},
+      "action": {"summary": "Keep as is.", "steps": ["Recheck after the next invoice arrives."]},
+      "evidence": [
+        {"date": "2029-12-01", "label": "Synthetic invoice SMT-1", "note": "Plan, period and amount."}
+      ],
+      "unknowns": ["Whether the December invoice was actually paid."],
+      "sources": ["sample-invoice-1"]
+    },
+    {
+      "id": "sample-annual",
+      "name": "Sample Annual Service",
+      "category": "Storage",
+      "plan": "Standard",
+      "status": "observed",
+      "status_label": "Prepaid annual term still covers the example date",
+      "status_note": "A synthetic annual invoice dated 2029-06-01 covers twelve months; auto-renew state is unknown.",
+      "cost": {
+        "label": "USD 120.00 per year",
+        "note": "Prepaid annual term; the monthly figure is a normalized equivalent, not a monthly charge.",
+        "kind": "prepaid",
+        "amount": "120.00",
+        "currency": "USD"
+      },
+      "monthly": {
+        "amount": "120.00",
+        "currency": "USD",
+        "months": 12,
+        "basis": "Synthetic prepaid annual term of USD 120.00 covering twelve months from 2029-06-01.",
+        "sources": ["sample-invoice-2"]
+      },
+      "cost_unknown": "Optional storage overage for the current month is not in the supplied files.",
+      "dates": {
+        "last_invoice": {"date": "2029-06-01", "note": "Issue date of the synthetic annual invoice.", "sources": ["sample-invoice-2"]},
+        "last_charge": {"note": "No payment receipt is present in the supplied files."},
+        "next_renewal": {"note": "No renewal notice is present; the term end alone does not establish a renewal date."}
+      },
+      "signals": [
+        {
+          "type": "usage_unverified",
+          "title": "Establish whether the storage is still in use",
+          "reason": "The supplied files contain no activity signal for this service.",
+          "evidence_note": "Supplied documents cover 2029-06 to 2029-12 only; silence in this packet is not proof of non-use.",
+          "next_check": "Open the account usage page and check the last access date."
+        }
+      ],
+      "needs_action": true,
+      "issue": {"title": "Renewal decision before the term ends", "summary": "Decide before the prepaid term lapses; no renewal notice is available."},
+      "action": {"summary": "Check the renewal setting in the account.", "steps": ["Open the account billing page.", "Record the auto-renew state and any renewal date."]},
+      "evidence": [
+        {"date": "2029-06-01", "label": "Synthetic invoice SAS-1", "note": "Annual amount and covered term."}
+      ],
+      "unknowns": ["Auto-renew state.", "Whether the storage is still used."],
+      "sources": ["sample-invoice-2"]
+    }
+  ],
+  "cases": [
+    {
+      "id": "sample-duplicate-charge",
+      "name": "Sample Monthly Tool duplicate charge",
+      "category": "Refund question",
+      "status": "observed",
+      "status_label": "Open question",
+      "status_note": "Two synthetic invoices cover the same service period.",
+      "cost": {"label": "USD 12.00 under review", "note": "Amount of the second invoice for the same period.", "kind": "historical", "amount": "12.00", "currency": "USD"},
+      "refund": {
+        "reason": "Two synthetic invoices state the same service period for the same account.",
+        "amount_label": "USD 12.00 under review",
+        "eligibility": "unverified",
+        "missing_evidence": ["Payment receipts for both invoices.", "The merchant's statement of which invoice was settled."]
+      },
+      "issue": {"title": "Same period invoiced twice", "summary": "Establish whether both invoices were actually paid before requesting anything."},
+      "action": {"summary": "Collect both payment receipts, then ask the merchant to reconcile.", "steps": ["Find the card or bank entries for both invoices.", "If both settled, open a billing ticket citing the invoice numbers."]},
+      "evidence": [
+        {"date": "2029-12-01", "label": "Synthetic invoice SMT-1", "note": "First invoice for the December period."},
+        {"date": "2029-12-03", "label": "Synthetic invoice SMT-2", "note": "Second invoice stating the same period."}
+      ],
+      "sources": ["sample-invoice-1"]
+    }
+  ]
+}

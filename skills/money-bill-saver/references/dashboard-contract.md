@@ -14,6 +14,29 @@ Keep explicit empty states for empty sections. Do not use other issues to fill a
 
 Counts describe their denominator: “14 services and leads” means 14 inventory rows, which can include observed, uncertain and historical states; it does not mean 14 confirmed paid subscriptions. `observed` itself can reflect service activity or entitlement rather than a settled charge. The cost sheet retains the same rows, including Unknown monthly costs, while only supported components enter the baseline. Screening badges must remain visible in both views. Tab changes and filters change visible rows only; the monthly baseline still describes the full inventory and must be labeled accordingly.
 
+## Build the JSON from a compact plan
+
+Write the report as a plan and let `scripts/build_report.py` expand it, instead of hand-writing every contract field:
+
+```text
+python scripts/build_report.py --input report-plan.json --output-dir work
+```
+
+The plan is an object with `report` (the top-level fields below, minus the row arrays), optional `monthly_cost` holding only its `note` and optional `as_of`, optional `evidence` (the manifest's `scope`, `searches` and `sources`), and the `services` and `cases` arrays. A plan row uses the row fields below with these shorthands: `dates` instead of `billing_dates`, `signals` instead of `review_signals`, `refund` instead of `refund_review`, `monthly` for this row's baseline item, `cost_unknown` for its baseline gap, and `sources` for the evidence IDs backing the row. The helper writes `dashboard.json`, plus `audit-evidence.json` when the plan carries an `evidence` block, both with owner-only permissions, and prints counts only.
+
+It derives exactly these, and nothing else:
+
+- The three billing-date events. A missing event becomes `unknown` with an empty source list; a supplied `date` without an explicit `status` becomes `confirmed`. Estimates, `not_scheduled` renewals, qualifiers and related dates stay explicit in the plan.
+- `review_group` and `needs_action` from a `refund` block, an explicit group, or an explicit `needs_action`; a plan that states both inconsistently is rejected rather than reconciled.
+- `cost.include_monthly`, set true only where this contract's conditions already hold: a subscription row with `status: observed`, `kind: fixed_monthly`, an amount, a currency and nonempty evidence. Supplying it explicitly overrides the derivation.
+- `monthly_cost.items` and `unknowns`, collected from each row's `monthly` and `cost_unknown` so one amount is never written twice, with `as_of` defaulting to the report date. Supplying these arrays directly is rejected.
+- `initials` from the service name, empty `review_signals`, and the documented defaults for optional signal and refund fields.
+- `service_ids` on every declared evidence search and source, inverted from the rows that cite them.
+
+It validates before writing: unsupported keys in a plan, row or signal fail loudly, so a mistyped field name surfaces here rather than silently dropping data. Every evidence ID used in a billing date, screening signal or baseline item must be declared in the plan's `evidence` block (or listed in `extra_source_ids`), and every declared source must be cited by some row; `http`, `https` and `mailto` locators are exempt. The built report is then checked with the renderer's own `prepare`, and the helper fails with that error instead of writing an invalid file.
+
+The helper expands structure. It never reads evidence, decides a status, infers a date from prose or supplies an amount; every fact in the output comes from the plan. A synthetic [example-report-plan.json](../assets/example-report-plan.json) shows the format. Hand-written `dashboard.json` remains valid; the contract below is the authority either way.
+
 ## Render
 
 Every audit webpage run must first read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). The integration preserves this contract's financial semantics, three sections, complete inventory and private offline output.
@@ -30,9 +53,9 @@ The template uses embedded CSS/JavaScript and system or self-contained embedded 
 
 ## Evidence completion status
 
-For new audits, follow [audit-evidence-contract.md](audit-evidence-contract.md) and supply `--evidence audit-evidence.json`. Use `--require-checked` when producing a completed report. An absent manifest, unreviewed source, unfinished result page, missing independent review or stale review binding makes the output preliminary. The renderer recomputes `computed.audit_quality`; an input value cannot override it. It rejects final rendering when required checks have not passed.
+For new audits, follow [audit-evidence-contract.md](audit-evidence-contract.md) and supply `--evidence audit-evidence.json`. Use `--require-checked` when producing a completed report. An absent manifest, unreviewed source or unfinished result page makes the output preliminary, as does a requested independent review that is missing or stale. Independent review is opt-in: pass `--require-independent-review` only for the review pass the user asked for. The renderer recomputes `computed.audit_quality`; an input value cannot override it. It rejects final rendering when required checks have not passed.
 
-Keep the quality status visible above the service inventory, with the declared scope and unresolved checks. Source-scoped completion does not convert an unknown charge date, current price or refund condition into a confirmed fact. A report can correctly pass with explicitly unknown facts when source collection and independent review are complete within its declared scope.
+Keep the quality status visible above the service inventory, with the declared scope and unresolved checks. Source-scoped completion does not convert an unknown charge date, current price or refund condition into a confirmed fact. A report can correctly pass with explicitly unknown facts when source collection is complete within its declared scope. State whether an independent review was run rather than implying one from a passed gate.
 
 ## Top-level fields
 

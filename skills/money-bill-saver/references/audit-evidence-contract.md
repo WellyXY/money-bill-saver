@@ -1,6 +1,6 @@
-# Evidence coverage and independent review
+# Evidence coverage and optional independent review
 
-The output is **provisional** until the declared evidence has been checked and another reviewer has reviewed the final service and other-case rows against that evidence. `scripts/check_audit.py` enforces this contract. It does not establish refund eligibility, infer a charge from an invoice, prove that all accounts were discovered, or certify that a reviewer's judgment is correct.
+The output is **provisional** until the declared evidence has been checked. That coverage check is the required gate. An independent review of the final service and other-case rows against that evidence is a **separate pass the user triggers**, described in [deliverables.md](deliverables.md); when one is run, this contract binds it to the exact evidence and report it reviewed. `scripts/check_audit.py` enforces both parts. It does not establish refund eligibility, infer a charge from an invoice, prove that all accounts were discovered, or certify that a reviewer's judgment is correct.
 
 ## Files and scope
 
@@ -46,6 +46,10 @@ Keep this evidence bundle private. Place `audit-evidence.json` at the bundle roo
 }
 ```
 
+`independent_review_file` is **optional**. Omit it for an ordinary audit: the gate then checks evidence coverage alone and reports `independent_review: "not_requested"`. Add it only when a review actually ran, because declaring it makes the checker validate and require that review. `--require-independent-review` on either helper demands one even when the manifest declares none; use it for the review pass the user asked for.
+
+`service_ids` can be filled by `scripts/build_report.py` from the report rows that cite each source, so the manifest and the report cannot drift apart; see [dashboard-contract.md](dashboard-contract.md). Everything else in the manifest is written from the actual retrieval.
+
 `mode` is `mailbox` or `files`. Use `files` only when the user supplied a finite set of documents and no mailbox-wide claim is made. Describe those supplied files and limitations precisely; keep `searches: []` and declare each supplied source. A files-only pass is not evidence of a complete mailbox audit.
 
 ## Search coverage
@@ -81,7 +85,7 @@ Attachment entries need `parent_id` matching the parent message source and `atta
 
 The checker confirms file presence and declared review coverage. The agent and independent reviewer remain responsible for reading PDF pages, OCR where needed, and interpreting the contents.
 
-## Independent review bound to the report
+## Independent review bound to the report (when one is run)
 
 ```json
 {
@@ -116,7 +120,7 @@ After saving the manifest and all source/search files, call `evidence_digest(pat
 
 Also call `report_digest(prepared_report)` and store the returned hex digest in `report_sha256`. This binds the entire substantive report, including top-level monthly cost inputs, summary, coverage and all service/case rows. It excludes **only** the `computed` field, which the renderer recomputes and which contains the transient audit-quality result. No other top-level fields are excluded. Changing the monthly cost calculation inputs or summary after review invalidates this digest even if every individual service row is unchanged. A missing report digest prevents a checked result. Compute all hashes from the same final prepared report that the reviewer assessed.
 
-`reviewed_source_ids` must include every source marked `reviewed` for that service or other case. `verdict` is `pass` or `needs_review`; a missing row or a `needs_review` verdict prevents a checked result. Each review row needs a specific note. Global `issues` are objects with `message`, optional `service_id`, and optional `blocking`. Issues block by default; `blocking: false` is reserved for clearly nonblocking observations.
+`reviewed_source_ids` must include every source marked `reviewed` for that service or other case. `verdict` is `pass` or `needs_review`; once a review is in scope, a missing row or a `needs_review` verdict prevents a checked result. Each review row needs a specific note. Global `issues` are objects with `message`, optional `service_id`, and optional `blocking`. Issues block by default; `blocking: false` is reserved for clearly nonblocking observations.
 
 ## Running the gate
 
@@ -124,6 +128,6 @@ Also call `report_digest(prepared_report)` and store the returned hex digest in 
 python3 scripts/check_audit.py --report prepared-report.json --evidence private-evidence/audit-evidence.json --output audit-check.json
 ```
 
-Use `--force` only to replace an existing check output. Exit codes: `0` checked, `2` provisional, `1` input/output or invalid report failure. The CLI applies `render_dashboard.prepare(report)` before checking so its row hashes match the renderer. The Python API `assess(report, evidence_path=None)` expects an already prepared report, returns `status`, `summary`, `issues`, `counts`, and `scope`, and does not mutate report data. Missing evidence or invalid manifest content returns provisional. Counts distinguish subscription `services`, `other_cases`, and combined `entities`; `independently_reviewed_entities` includes both types.
+Use `--force` only to replace an existing check output. Add `--require-independent-review` for a review pass the user requested. Exit codes: `0` checked, `2` provisional, `1` input/output or invalid report failure. The CLI applies `render_dashboard.prepare(report)` before checking so its row hashes match the renderer. The Python API `assess(report, evidence_path=None, require_independent_review=False)` expects an already prepared report, returns `status`, `summary`, `independent_review`, `issues`, `counts`, and `scope`, and does not mutate report data. `independent_review` is `not_requested`, `passed`, `incomplete`, or `unknown` when the manifest could not be validated at all. Missing evidence or invalid manifest content returns provisional. Counts distinguish subscription `services`, `other_cases`, and combined `entities`; `independently_reviewed_entities` includes both types.
 
-A checked result means the declared evidence and final rows passed these coverage checks. Display the scope and remaining factual uncertainty alongside it. Never replace unknown charges, usage, costs or refund eligibility with guessed values to make the gate pass.
+A checked result means the declared evidence and final rows passed these coverage checks, and the independent review passed if one was in scope. Read `independent_review` before describing a result as reviewed. Display the scope and remaining factual uncertainty alongside it. Never replace unknown charges, usage, costs or refund eligibility with guessed values to make the gate pass.

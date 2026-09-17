@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.8.2 / Stage 0**
+**Version: v0.9.0 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -54,16 +54,18 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 3. Follow later events for the same account and transaction. A newer payment or plan confirmation can change an earlier conclusion while the full timeline remains available.
 4. Check invoice arithmetic, identity, service periods, rates, usage and potential duplicate payments. Record evidence gaps explicitly.
 5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
-6. Apply the bundled design guidance and render the three-section webpage with evidence, actions and local drafts.
+6. Apply the bundled design guidance, expand the findings into report data with `scripts/build_report.py`, and render the three-section webpage with evidence, actions and local drafts.
 7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
 
 ## Completion checks before the first report
 
 Before concluding that invoices, payments or later account changes are missing, run a merchant/seller/provider search without billing keyword restrictions. Read localized billing and lifecycle messages, every available result page, full message bodies and relevant attachments. Later cancellation, plan changes, low-balance notices and resource removal can change an earlier conclusion.
 
-New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
+New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. That coverage is the required gate.
 
-The executable gate checks collection closure, unreviewed records, attachment coverage, review findings and stale bindings. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
+Independent review is a separate pass the user asks for, not a step of every audit. A second reviewer reads the original evidence against the finished report, looking for omitted billing events, invoices treated as payments and conclusions that exceed their evidence. When one runs, it is bound to the full report, its service/case rows and the evidence bytes, so later edits to summaries, costs or sources require a new review.
+
+The executable gate checks collection closure, unreviewed records, attachment coverage, and any review that was run. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
 
 ```sh
 python skills/money-bill-saver/scripts/check_audit.py \
@@ -72,6 +74,8 @@ python skills/money-bill-saver/scripts/render_dashboard.py \
   --input dashboard.json --evidence audit-evidence.json \
   --require-checked --output dashboard.html
 ```
+
+Add `--require-independent-review` to both commands for a review the user requested; without it, a review is still validated whenever the manifest declares an `independent_review_file`. `audit-checks.json` records which happened in its `independent_review` field.
 
 An incomplete audit can still be rendered as a clearly labeled preliminary report by omitting `--require-checked`. Without a manifest, legacy reports and examples are preliminary by default. A completed check applies to the declared source scope; facts and refund conditions absent from that scope remain unknown. The gate cannot independently judge every extraction or authenticate the reviewer's identity, so original-source review remains part of the workflow.
 
@@ -136,6 +140,14 @@ python skills/money-bill-saver/scripts/extract_mime.py \
   /absolute/path/to/raw-message.json --output-dir work/mail --extract-pdf
 ```
 
+Expand a compact plan into report data (and an evidence manifest when the plan declares one):
+
+```sh
+python skills/money-bill-saver/scripts/build_report.py \
+  --input skills/money-bill-saver/assets/example-report-plan.json \
+  --output-dir work/report
+```
+
 Render the synthetic webpage example:
 
 ```sh
@@ -144,7 +156,7 @@ python skills/money-bill-saver/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-All five tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
+All six tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
 ## Cost and evidence semantics
 
@@ -177,9 +189,15 @@ python -m unittest discover -s tests/money-bill-saver -p 'test_*.py'
 
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, raw MIME decoding (attachments, legacy charsets, encrypted or mislabeled PDFs, size limits), varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
-Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
+Report-builder tests cover derived billing-date events, review groups, baseline items counted once, evidence attribution and refused mistyped fields. Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, the opt-in independent review, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.9.0
+
+- Independent review left the required flow and became a user-triggered pass. Evidence coverage alone decides the gate; `--require-independent-review` on `check_audit.py` and `render_dashboard.py` demands one when the user asks for it, and a declared `independent_review_file` is still validated. `audit-checks.json` reports `independent_review` as `not_requested`, `passed` or `incomplete`.
+- `scripts/build_report.py` expands a compact plan into a contract-valid `dashboard.json`, deriving the three billing-date events, review group, refund basis, screening-signal defaults, monthly baseline items and the `service_ids` on every declared evidence source, then validating with the renderer before writing.
+- A synthetic `assets/example-report-plan.json` shows the plan format.
 
 ## v0.8.2
 

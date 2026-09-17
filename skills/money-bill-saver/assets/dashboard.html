@@ -110,7 +110,7 @@ function renderMonthlyCost(){
 }
 function renderReport(){
  const metrics=report.computed;all=[...report.subscriptions,...(report.other_cases||[])];
- const quality=metrics.audit_quality||{status:'provisional',summary:'Evidence coverage and independent source review have not been verified.',issues:[]},checked=quality.status==='checked';
+ const quality=metrics.audit_quality||{status:'provisional',summary:'Evidence coverage has not been verified.',issues:[]},checked=quality.status==='checked';
  const qualityBox=document.getElementById('audit-quality');qualityBox.classList.toggle('checked',checked);
  qualityBox.innerHTML=`<strong>${checked?'Checked against the declared sources':'Preliminary report: evidence checks incomplete'}</strong><p>${esc(quality.summary)}</p>${quality.scope?.description?`<p>Scope: ${esc(quality.scope.description)}</p>`:''}<p>${checked?'Collection and review checks passed within this scope. Unknown account facts remain unknown.':'Use this as a partial review. Unreconciled records can change service status, costs and recommendations.'}</p>${quality.issues?.length?`<details><summary>What remains unchecked (${quality.issues.length})</summary><ul>${quality.issues.map(i=>`<li>${esc(i.service_id?i.service_id+': ':'')}${esc(i.message)}</li>`).join('')}</ul></details>`:''}`;
 

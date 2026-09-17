@@ -39,7 +39,7 @@ class AuditCoverageTests(unittest.TestCase):
     def write(self, path, data):
         (self.base / path).write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
 
-    def assess(self):
+    def assess(self, require_independent_review=False):
         self.write('audit-evidence.json', self.manifest)
         self.review.setdefault('report_sha256', audit_check.report_digest(self.report))
         try:
@@ -47,7 +47,8 @@ class AuditCoverageTests(unittest.TestCase):
         except (OSError, ValueError, TypeError, KeyError):
             pass
         self.write('review.json', self.review)
-        return audit_check.assess(self.report, self.base / 'audit-evidence.json')
+        return audit_check.assess(self.report, self.base / 'audit-evidence.json',
+                                  require_independent_review)
 
     def codes(self, result):
         return {i['code'] for i in result['issues']}
@@ -315,6 +316,55 @@ class AuditCoverageTests(unittest.TestCase):
     def test_malformed_manifest_returns_provisional_instead_of_crashing(self):
         self.manifest['sources'][0]['kind'] = ['bad']
         self.assertEqual(self.assess()['status'], 'provisional')
+
+    def test_independent_review_is_optional_by_default(self):
+        self.manifest.pop('independent_review_file')
+        result = self.assess()
+        self.assertEqual(result['status'], 'checked')
+        self.assertEqual(result['independent_review'], 'not_requested')
+        self.assertNotIn('missing_independent_review', self.codes(result))
+        self.assertNotIn('missing_independent_service', self.codes(result))
+        self.assertIn('no independent review was run', result['summary'])
+        self.assertEqual(result['counts']['independently_reviewed_entities'], 0)
+
+    def test_optional_review_never_weakens_evidence_coverage(self):
+        self.manifest.pop('independent_review_file')
+        self.manifest['sources'][0]['disposition'] = 'unread'
+        result = self.assess()
+        self.assertEqual(result['status'], 'provisional')
+        self.assertIn('unreviewed_source', self.codes(result))
+        self.assertEqual(result['summary'], 'Provisional: evidence coverage is incomplete.')
+
+    def test_user_triggered_review_is_enforced_when_requested(self):
+        self.manifest.pop('independent_review_file')
+        result = self.assess(require_independent_review=True)
+        self.assertEqual(result['status'], 'provisional')
+        self.assertIn('missing_independent_review', self.codes(result))
+        self.assertEqual(result['independent_review'], 'incomplete')
+
+    def test_declared_review_is_validated_without_the_flag(self):
+        passed = self.assess()
+        self.assertEqual(passed['independent_review'], 'passed')
+        self.review['services'][0]['verdict'] = 'needs_review'
+        failed = self.assess()
+        self.assertEqual(failed['status'], 'provisional')
+        self.assertEqual(failed['independent_review'], 'incomplete')
+        self.assertIn('independent_needs_review', self.codes(failed))
+
+    def test_cli_requires_review_only_with_the_flag(self):
+        renderer_spec = importlib.util.spec_from_file_location('renderer', SCRIPT.with_name('render_dashboard.py'))
+        renderer = importlib.util.module_from_spec(renderer_spec)
+        renderer_spec.loader.exec_module(renderer)
+        renderer.prepare(self.report)
+        self.manifest.pop('independent_review_file')
+        self.assess()
+        self.write('report.json', self.report)
+        command = [sys.executable, str(SCRIPT), '--report', str(self.base / 'report.json'),
+                   '--evidence', str(self.base / 'audit-evidence.json'),
+                   '--output', str(self.base / 'check.json'), '--force']
+        self.assertEqual(subprocess.run(command, capture_output=True).returncode, 0)
+        self.assertEqual(subprocess.run(command + ['--require-independent-review'],
+                                        capture_output=True).returncode, 2)
 
     def test_cli_exit_codes_and_overwrite_guard(self):
         renderer_spec = importlib.util.spec_from_file_location('renderer', SCRIPT.with_name('render_dashboard.py'))
