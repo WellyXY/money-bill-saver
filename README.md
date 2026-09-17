@@ -136,6 +136,8 @@ python skills/money-bill-saver/scripts/extract_mime.py \
   /absolute/path/to/raw-message.json --output-dir work/mail --extract-pdf
 ```
 
+The MIME output preserves the original response, decoded attachments and readable derivatives with integrity bindings. Source entries start unread; review them before including their conclusions in an audit. Keep the output bundle together when moving it, and use an output directory separate from the input files. Complete saved tool results are supported; truncated previews must be retrieved again rather than treated as complete messages.
+
 Render the synthetic webpage example:
 
 ```sh
@@ -177,7 +179,7 @@ python -m unittest discover -s tests/money-bill-saver -p 'test_*.py'
 
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, raw MIME decoding (attachments, legacy charsets, encrypted or mislabeled PDFs, size limits), varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
-Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
+Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. MIME regressions cover truncated messages, inline invoice images, attached messages, HTML charset declarations, PDFs without file extensions, portable PDF manifests, and failed output replacement. Original responses and readable derivatives are checked for modification or omission. These tests verify the gate's behavior; they do not replace factual review of real documents.
 
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
 
@@ -186,6 +188,7 @@ Browser and visual checks are separate from these automated tests. Use the host'
 - `scripts/extract_mime.py` decodes saved raw messages into a full MIME payload, hashed attachments, HTML/CSV text (including Big5) and PDF page text, with suggested evidence entries.
 - The workflow now probes mail tools for a raw single-message format before declaring an attachment unreadable, and falls back to user uploads, connected folders or an authorized browser session.
 - The evidence contract documents how converted messages and part-ID attachments satisfy the completion gate.
+- Raw conversion preserves originals and binds the files used for review; inline images and attached messages remain in the evidence inventory. Truncated MIME is rejected, legacy HTML encoding warnings remain visible, PDF references survive moving the bundle, and failed replacements preserve previous output and source files.
 
 ## v0.8.1
 

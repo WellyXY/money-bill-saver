@@ -4,6 +4,8 @@ Use this contract after reading selected invoices. It describes a local working 
 
 Before transcribing extracted PDFs, inspect each page's manifest integrity metadata. `unexpected_control_character_count` and `unexpected_control_characters` identify Unicode control characters other than normal tab, newline, carriage return and form feed; affected pages have `needs_visual_review: true` and the reason `unexpected_control_characters`. The helper preserves the extracted text, including NULs and other suspicious characters. Cross-check affected identifiers, amounts and other fields against the original PDF or matching authoritative evidence. Never guess that a NUL represents a hyphen, silently discard it, or use a malformed identifier to establish document identity; leave unresolved fields unknown.
 
+For PDFs extracted through `extract_mime.py`, use the attachment's `pdf_manifest_file` to find this page metadata. Inside that PDF manifest, resolve relative `source` and `text_file` paths against the manifest's directory; they remain valid when the whole mail bundle moves. Review any MIME decoding warnings against the original before transcribing HTML or CSV evidence.
+
 ## Shape
 
 ```json
