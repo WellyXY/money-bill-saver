@@ -1,38 +1,44 @@
 # Money Bill Saver
 
-Turn supplied bills and subscription notices into a private, evidence-linked review of **current services, refund questions, and other billing issues**. Money Bill Saver checks what the records support, shows what remains unknown, and prepares local support drafts when there is a concrete next step. It does not promise a refund or change an account by itself.
+**Know what you pay for, spot charges worth questioning, and draft refund requests—from your bills and subscription emails.**
 
-[Explore the 50-second interactive tutorial](https://wellyxy.github.io/money-bill-saver/) · [Open the synthetic report](https://wellyxy.github.io/money-bill-saver/example-report.html) · [Try it in Codex](#try-it-in-codex) · [How the audit works](#what-the-audit-delivers)
+[50-second illustrated quickstart](docs/quickstart.md) · [Interactive demo](https://wellyxy.github.io/money-bill-saver/) · [Open example report](https://wellyxy.github.io/money-bill-saver/example-report.html) · [MIT license](LICENSE)
 
-![Synthetic Money Bill Saver preliminary report showing summary metrics and the current services inventory](docs/assets/report-preview.png)
+## Install in one command
 
-*The tutorial and preview use fictional services and synthetic billing records. No personal mailbox, bank account, or payment service is connected.*
+Run in your terminal (requires Node.js and Git):
 
-**Version: v0.8.2 / Stage 0**
+```sh
+npx --yes skills add WellyXY/money-bill-saver --skill money-bill-saver --agent codex --global --yes
+```
 
-The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
+[![Money Bill Saver report: service inventory, monthly costs and billing questions, illustrated with synthetic data](docs/assets/report-preview.png)](https://wellyxy.github.io/money-bill-saver/example-report.html)
+
+*Example report with fictional services and amounts. Your audit produces a private webpage.*
+
+**You get:** your service list and monthly cost sheet → refund questions with evidence → next steps and support drafts. Refunds are not guaranteed; requests are sent only with your authorization.
 
 ## Try it in Codex
 
-This preview is for invited early testers. Money Bill Saver's original material currently has **no public source-code license**. Contact the maintainer through [GitHub Issues](https://github.com/WellyXY/money-bill-saver/issues) for permission before using or redistributing it outside an invitation. Bundled third-party material retains its own license, noted below.
+Then open a new Codex task and try it:
 
-1. In Codex, paste this installation request:
+```text
+Use $money-bill-saver to render and explain the bundled synthetic example report. Do not access my mailbox or personal files.
+```
 
-   ```text
-   $skill-installer Install the money-bill-saver skill from https://github.com/WellyXY/money-bill-saver/tree/main/skills/money-bill-saver
-   ```
+Prefer installing from chat? Paste this request into Codex:
 
-2. Open a new Codex conversation. To try the workflow without personal data, paste:
+```text
+$skill-installer Install the money-bill-saver skill from https://github.com/WellyXY/money-bill-saver/tree/main/skills/money-bill-saver
+```
 
-   ```text
-   Use $money-bill-saver to render and explain the bundled synthetic example report. Do not access my mailbox or personal files.
-   ```
+Open a new task after installation; restart Codex if the skill does not appear. The [illustrated quickstart](docs/quickstart.md) walks through your first report.
 
-3. For your own review, provide the bills or other records you choose and define the scope. The skill does not include a mailbox connector or authorize account access merely because it is installed.
+For your own review, attach the bills you choose or specify an authorized mailbox and date range. A mailbox review needs a mail connector available in your host; this skill does not bundle one. Installing it does not grant account access.
 
-If the skill does not appear after installation, restart Codex. [OpenAI's skill guide](https://learn.chatgpt.com/docs/build-skills) describes GitHub installation and skill discovery.
+**Version: v0.8.2 / Stage 0 · [MIT](LICENSE)**
 
-The [interactive HTML tutorial](https://wellyxy.github.io/money-bill-saver/) shows a fictional run step by step. It can be paused, replayed, and navigated with a keyboard. GitHub README files do not run the tutorial's JavaScript, so the animation lives on GitHub Pages.
+Reports, interface copy, exports and repository documentation default to **English** unless another language is requested. The [interactive demo](https://wellyxy.github.io/money-bill-saver/) uses synthetic data and can be paused, replayed or navigated with a keyboard.
 
 ## What the audit delivers
 
@@ -105,9 +111,9 @@ An incomplete audit can still be rendered as a clearly labeled preliminary repor
 
 ## Install and use
 
-Use the [invited-tester steps above](#try-it-in-codex) for the simplest installation. For a local manual installation, copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into a [Codex user skill location](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills), such as `~/.agents/skills/`. Update an existing installation by replacing the same skill directory.
+Use the [one-command installation above](#install-in-one-command) or the [Codex chat installer](#try-it-in-codex). For a local manual installation, copy this repository's [`skills/money-bill-saver`](skills/money-bill-saver) directory into a [Codex user skill location](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills), such as `~/.agents/skills/`. Update an existing installation by replacing the same skill directory.
 
-Invited testers who want to exercise the plugin packaging can instead add this GitHub repository as a Codex marketplace source and install the preview plugin:
+For the optional Codex plugin package, add this repository as a marketplace source and install the preview plugin:
 
 ```sh
 codex plugin marketplace add WellyXY/money-bill-saver
@@ -134,7 +140,7 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
 
-The bundled design skill is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) and carries its [MIT license and copyright notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The bundled Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). These notices do not grant a public license to the original Money Bill Saver material.
+The bundled design skill is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) and carries its [MIT license and copyright notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The bundled Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). Original Money Bill Saver material is available under the repository’s [MIT license](LICENSE); these third-party files retain their respective notices.
 
 The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
 
