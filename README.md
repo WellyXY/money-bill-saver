@@ -14,7 +14,7 @@ The primary output is a private, self-contained webpage. Reports, interface copy
 
 ## Try it in Codex
 
-This preview is for invited early testers. The repository currently has **no public source-code license**. Contact the maintainer through [GitHub Issues](https://github.com/WellyXY/money-bill-saver/issues) for permission before using or redistributing its contents outside an invitation.
+This preview is for invited early testers. Money Bill Saver's original material currently has **no public source-code license**. Contact the maintainer through [GitHub Issues](https://github.com/WellyXY/money-bill-saver/issues) for permission before using or redistributing it outside an invitation. Bundled third-party material retains its own license, noted below.
 
 1. In Codex, paste this installation request:
 
@@ -133,6 +133,8 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 ## Bundled design guidance
 
 Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
+
+The bundled design skill is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) and carries its [MIT license and copyright notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The bundled Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). These notices do not grant a public license to the original Money Bill Saver material.
 
 The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
 
