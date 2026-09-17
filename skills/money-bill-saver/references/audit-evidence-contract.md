@@ -10,15 +10,15 @@ Keep this evidence bundle private. Place `audit-evidence.json` at the bundle roo
 {
   "scope": {
     "mode": "mailbox",
-    "description": "Focused Acme billing and related account-event searches, March 16–September 16, 2026; selected mailbox including archived mail, excluding spam and trash.",
+    "description": "All available Acme merchant mail, including archived, spam and trash messages, reviewed through the stated date.",
     "as_of": "2026-09-16"
   },
   "searches": [
     {
-      "id": "acme-billing-page-1",
+      "id": "acme-discovery-page-1",
       "service_ids": ["acme"],
-      "kind": "billing",
-      "query": "after:2026/03/16 before:2026/09/17 from:acme.example {invoice receipt payment}",
+      "kind": "merchant_discovery",
+      "query": "in:anywhere (from:acme.example OR Acme)",
       "result_file": "searches/acme-1.json"
     }
   ],
@@ -50,11 +50,9 @@ Keep this evidence bundle private. Place `audit-evidence.json` at the bundle roo
 
 ## Search coverage
 
-Every mailbox service and other case needs recorded coverage from a `billing` or `lifecycle` search within the selected account/date scope. Focused invoice/receipt queries and channel searches can provide this coverage; use targeted sender/account/thread checks for relevant state changes. Follow [email-search-checklist.md](email-search-checklist.md) for the default period, query choices and stopping condition. Automatic unrestricted merchant discovery is not part of the default workflow. The legacy `merchant_discovery` kind remains accepted for existing bundles and separately requested investigations.
+Every mailbox service and other case needs a broad `merchant_discovery` search. Search by merchant names, sender domains and aliases before narrowing to billing terms. Do not discover subscriptions using only English `invoice`, `receipt`, `payment`, `paid`, `charge`, or `billing` keywords: those searches miss localized invoices and lifecycle notices. The checker rejects these obvious English restrictions in discovery queries, but it cannot prove that a query contains every merchant alias or is semantically broad enough. The reviewer must assess that coverage.
 
-The checker requires a recorded search association for each reported entity; it accepts billing terms and category filters. It cannot judge query relevance, infer an absent subscription or prove that all aliases were searched. The reviewer checks whether material conclusions are supported within the declared scope. Unknown facts may remain unknown after a completed scoped review; material unread evidence still prevents a checked result.
-
-Preserve the exact query and actual raw tool result for every page. Supported raw result forms are `{"structuredContent":{"emails":[{"id":"..."}],"next_page_token":null}}` or an equivalent direct object with `emails[]` or `ids[]`. The checker reads the saved IDs and pagination token; manually supplied counts are not a substitute. A saved no-result search is valid scope evidence, not proof that a named service does not exist.
+Additional searches use `kind: "billing"` or `"lifecycle"`. Preserve the exact query and actual raw tool result for every page. Supported raw result forms are `{"structuredContent":{"emails":[{"id":"..."}],"next_page_token":null}}` or an equivalent direct object with `emails[]` or `ids[]`. The checker reads the saved IDs and pagination token; manually supplied counts are not a substitute.
 
 Search entries must use `result_file`; source entries must use `file`. A source-style `file` key on a search, or a search-style `result_file` key on a source, is rejected as ambiguous. Evidence hashing reads the collection-specific field used by the checker, so an extra field cannot substitute unrelated bytes for the actual reviewed search result or source.
 
@@ -73,21 +71,13 @@ Source kinds are `message`, `attachment`, `account_page`, and `document`. Each s
 | `unread` | Content has not been reviewed. The output remains provisional. |
 | `inaccessible` | State the access problem and the affected conclusion. The output remains provisional. |
 
-Reviewed messages must save the full Gmail MIME response or a validated conversion from an original raw message, not just a snippet or search result. The checker inspects the MIME tree. Attachments, externally stored body parts, attached messages and inline images require their own source disposition. A Content-ID or inline disposition does not establish irrelevance: inspect potential invoice images, and explicitly mark confirmed logos or decorations irrelevant with a reason.
+Reviewed messages must save the full Gmail MIME response, not just a snippet or search result. The checker inspects the MIME tree. Non-inline attachments and externally stored body parts require their own source disposition. Inline images identified as such by MIME headers are excluded from that requirement; other image attachments may be invoice images and must be triaged.
 
 The checker examines each text part for omitted content. A plain-text fallback such as "HTML not supported" does not make a message complete when its HTML part declares nonzero bytes but has no saved body or external attachment reference. Empty alternatives without any actual message content also fail. Empty multipart containers are normal; attachment-only messages can pass when their meaningful attachments have been reviewed.
 
 Attachment entries need `parent_id` matching the parent message source and `attachment_id` matching its exact MIME attachment ID. For an attachment embedded directly in MIME with no attachment ID, use its exact `part_id`. Attachments inherit all parent service associations. A relevant PDF is not reviewed merely because its enclosing message was read. If a PDF is genuinely irrelevant, explain that specifically; a generic exclusion note is not a substitute for reviewing billing evidence.
 
-### Converted raw messages
-
-`scripts/extract_mime.py` converts saved Gmail RAW JSON (direct or wrapped in `structuredContent`) or an `.eml` file into a full MIME `message.json`. The original input is saved alongside the conversion. Raw MIME parts have deterministic tree-based `part_id` values, rather than invented Gmail attachment IDs; keep the helper's parent/part associations when integrating them.
-
-Each manifest message carries suggested `evidence_sources` entries with empty `service_ids` and paths relative to the helper's output directory. Place that directory below the bundle root, prefix each source `file` accordingly, and add the appropriate service IDs. Extraction starts sources as `unread` (or `inaccessible` when an attachment cannot be saved). Change a disposition only after the content has actually been read. A helper manifest describes its supplied messages; it does not replace scoped search coverage, pagination, factual analysis or independent review.
-
-Converted `message.json` records contain `extraction.schema_version: "1"` and `extraction.files`. Each file record contains `role`, `file` and its exact-byte `sha256`. There is exactly one `original` input, plus the body text, saved attachments and generated attachment text/PDF artifacts. These paths are relative to the directory containing `message.json`; keep them unchanged when moving the whole bundle. They must remain within that message directory and the audit bundle. The checker validates these files and includes their bytes in the evidence digest. Keep `message.json` out of its own file list to avoid a circular hash. `raw_sha256` records the decoded original email bytes; a stored hash alone is not a substitute for the original file.
-
-MIME conversion errors and unresolved truncation cannot become a complete-message claim. Decoding warnings require examining the affected content before marking it reviewed; complete file retrieval and successful text extraction do not establish correct invoice interpretation.
+`scripts/extract_mime.py` converts a saved raw message (Gmail RAW JSON, with or without a `structuredContent` wrapper, or an `.eml` file) into this shape. Its `message.json` is a full MIME payload with decoded text bodies and base64url attachment data; attachments have no Gmail attachment ID, so they are matched by `part_id`. Each manifest message carries `evidence_sources` entries with `disposition: "unread"`, empty `service_ids` and paths relative to the helper's output directory. Place that directory below the bundle root, prefix the paths accordingly, add service IDs, and change a disposition only after the content has actually been read.
 
 The checker confirms file presence and declared review coverage. The agent and independent reviewer remain responsible for reading PDF pages, OCR where needed, and interpreting the contents.
 
@@ -113,7 +103,7 @@ The checker confirms file presence and declared review coverage. The agent and i
 
 The reviewer must independently inspect evidence, not merely approve the author's summary. Per service, check:
 
-- Merchant identity, account and known billing-channel aliases; relevant source languages, selected period and declared pages were considered. Evaluate conclusions within that scope rather than requiring an unrestricted merchant sweep.
+- Merchant identity and account or billing-channel aliases; localized messages and all declared pages were considered.
 - Full invoice, receipt and meaningful attachments were read; issue date, email date, service period and actual payment date are distinguished.
 - Later cancellation, trial conversion, suspension, resource deletion, refund, failure or credit events are reconciled with earlier records.
 - A zero-dollar invoice, paid-from-credit invoice, subscription price, top-up, or refund does not become a new cash charge without payment evidence.
@@ -122,7 +112,7 @@ The reviewer must independently inspect evidence, not merely approve the author'
 
 Use `service_digest(row)` from `check_audit.py` after `render_dashboard.prepare(report)` has applied renderer defaults. Hash each row in both `report['subscriptions']` and `report.get('other_cases', [])`. The review `services[]` array contains all of these entities, using their existing report IDs as `service_id`. The helper hashes the entire row with canonical JSON: sorted keys, UTF-8 with `ensure_ascii=False`, and separators `(',', ':')`. No fields are excluded. Any later change to the row invalidates that review and requires re-review.
 
-After saving the manifest and all source/search files, call `evidence_digest(path_to_audit_evidence_json)` and place its returned hex digest in `evidence_sha256`. This helper hashes canonical `scope`, `searches`, and `sources` metadata together with SHA256 hashes of every declared source `file`, search `result_file`, and the original/derived files declared by converted messages. It validates the file hashes and directory containment rules. The independent review file's contents are excluded to avoid a circular digest; it need not exist when this helper runs. Changing an original email, extracted text, PDF, message body, search result, source disposition, service association or scope after review invalidates the evidence binding. A missing digest also prevents a checked result. Hashing establishes integrity, not sender authenticity or proof that a reviewer read the evidence.
+After saving the manifest and all source/search files, call `evidence_digest(path_to_audit_evidence_json)` and place its returned hex digest in `evidence_sha256`. This helper hashes canonical `scope`, `searches`, and `sources` metadata together with SHA256 hashes of the exact bytes of every declared source `file` and search `result_file`. It checks the same directory containment rule. The independent review file's contents are excluded to avoid a circular digest; it need not exist when this helper runs. Changing a PDF, message body, search result, source disposition, service association or scope after review invalidates the evidence digest. A missing digest also prevents a checked result. Hashing is an integrity check, not proof that a reviewer actually read the evidence.
 
 Also call `report_digest(prepared_report)` and store the returned hex digest in `report_sha256`. This binds the entire substantive report, including top-level monthly cost inputs, summary, coverage and all service/case rows. It excludes **only** the `computed` field, which the renderer recomputes and which contains the transient audit-quality result. No other top-level fields are excluded. Changing the monthly cost calculation inputs or summary after review invalidates this digest even if every individual service row is unchanged. A missing report digest prevents a checked result. Compute all hashes from the same final prepared report that the reviewer assessed.
 

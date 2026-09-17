@@ -16,18 +16,37 @@ A single-charge audit keeps the three web sections scoped to that charge/service
 
 ## Visual document
 
-Use [dashboard-contract.md](dashboard-contract.md) as the single reference for section contents, row classification, billing dates, screening leads and monthly cost calculations.
-Use the fixed renderer and the short [webpage preflight](web-design.md); only Section 14 of the bundled design guide is needed for ordinary audits.
-Read those references when building or verifying the page, not at the start of evidence collection.
+Before producing any audit webpage, read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). Use the audit integration guidance to apply appropriate design rules while preserving financial evidence and the complete inventory.
 
-For a requested Excel export, use the host's spreadsheet capability, retain formulas and sources, verify the saved file, and link it as an adjacent local download.
-Perform page verification using the checks in `web-design.md`; preserve the source-review gate below.
+Read [dashboard-contract.md](dashboard-contract.md) for the renderer schema and validation boundary. The default audit page presents these three sections in order:
+
+| Section | Contents | Required distinctions |
+|---|---|---|
+| **Current services** | Every observed continuing service and every service explicitly named by the user; plan, current known state/date, price/cycle, last invoice issue date, last successful charge date, next renewal, screening badges, issue and next action | Normal/resolved services remain visible. Uncertain or historical evidence is labeled and does not become a claim of current activity. This and the Monthly cost sheet are two views of the same inventory, whose row count is not a confirmed paid-subscription count. |
+| **Refund questions** | A separate Worth checking before a refund request group for overlap, usage and trial screening leads, followed by specific sourced refund concerns | Leads show reason, evidence boundary and next check, without assumed refund amounts or entitlement. Specific cases show amount under review, eligibility state, missing evidence, proposed action and draft when appropriate. Keep lead and refund-case counts separate; an existing refund awaiting receipt stays distinct from a new opportunity. |
+| **Other issues** | Renewal choices, missing price details, benefit restoration, reimbursements, usage/dependencies and source gaps without a specific refund basis | These can be valuable actions without being counted as refundable money. An ordinary reimbursement payable to the user is not a refund of subscription spend. |
+
+Each item opens the supporting timeline, unresolved facts, official action route and copyable draft when one exists. A service remains in the first section when it also has a refund question or other issue. Include non-subscription refund cases in the refund section only when they have a specific sourced refund basis; other non-subscription cases go to other issues. Source type alone does not decide the issue group.
+
+Keep all three headings even when a section has no items, and state that no supported items were found. Do not promote missing cost data, ordinary benefits or unrelated reimbursement questions into refund opportunities to populate the page. A suspicious charge may be unverified; explaining that uncertainty is part of the refund question. The presence of a source does not itself establish refund entitlement.
+
+Make proactive screening visible in both service and cost views. Use specific reasons and next checks for possible functional overlap, uncertain use and unresolved trial conversion; do not bury these in a general issue note. Missing update email is a weak signal, not proof of inactivity. Retain dates and coverage that distinguish a long gap in available records from a proven search result. Show any chosen activity window as a review heuristic. A lead becomes a specific refund/courtesy assessment only after the payment/period and concern are established; viable cancellation savings remain a separate decision.
+
+Make the coverage boundary visible near the list. Label an evidence-supported paid term or recent usage signal precisely; do not relabel every discovered merchant as a currently active subscription. Include a latest-state correction where new evidence changes an earlier finding, and retire any draft contradicted by that evidence. Preserve the original event in the timeline without presenting it as the current problem.
+
+Use one Current services inventory with Services & dates and Monthly cost sheet tabs plus shared search/review filters. Switching tabs must preserve the selected filter and the same service universe. Label the baseline as covering the full inventory even when fewer rows are visible; filtering does not change financial totals.
+
+Show only sourced fixed monthly prices in a per-currency monthly subtotal. Display variable usage, prepaid purchases, multi-month/annual equivalents and unknown prices separately. The renderer's computed subtotal is a subset, not the user's complete monthly spending. Historical invoice face values, settled payments, credits and refunds remain distinct quantities.
+
+For manage/both audits, show **Known monthly baseline** near the current-services overview. List its as-of date, each source amount and covered term, monthly equivalent and evidence basis. Use the dashboard contract's validated `monthly_cost` items to combine account-specific current fixed prices or plan bases with equivalents of still-valid prepaid terms, once per service and separately by currency. Explain that this is a cost estimate; actual cash charged this month can differ because of payment schedules, waivers and credits. List unresolved prices, usage and add-ons with the service and evidence needed. Do not add the separate fixed monthly subtotal to this baseline or label the baseline as complete spend, actual payments or a guaranteed minimum. An actual cash-spend view needs a separately reconciled transaction period and sources.
+
+Use a cost sheet with one row per service and separate original amounts, billing basis, monthly equivalents, inclusion, screening badges and unresolved costs. For a requested Excel export, use the host's spreadsheet capability, retain formulas and source references, verify the saved file, and link it as an adjacent local download. Unknown costs remain explicit and excluded.
+
+Open the generated page locally and check all three sections against the source inventory and case classifications, including empty states, distinct monthly calculations and their components, unresolved costs, readable details, evidence links and copyable drafts. Priority affects emphasis, not whether a classified item is shown. Keep source text escaped and network-loaded resources out of the document; do not embed raw email HTML, tracking pixels or private invoice access tokens. Default the template and data copy to English; localize them only when the user explicitly requests another output language. Check both light and dark themes, mobile layout, keyboard focus and reduced-motion behavior using the host's permitted verification tools.
 
 ## Source review before output
 
 Before delivering a full audit, have an independent agent review the scoped source manifest and relevant original evidence against the draft inventory. Give the reviewer the user's task and sources without an expected answer. The reviewer must check omitted service/billing records, later lifecycle changes, invoice-versus-payment dates, current-cost inclusion, and whether open refund leads or drafts rely on superseded evidence. Record concrete discrepancies and their resolution in `audit-evidence.json`; a review of layout or the author's summary alone does not satisfy this step. If independent review is unavailable, record that limitation and retain provisional status.
-
-Completion applies to the declared focused searches and supplied sources. Confirm that the selected pages and material evidence were reviewed, relevant later events were reconciled, and each report conclusion has evidence or an explicit unknown. Broader searches and older history are separate user-requested follow-ups. State that annual plans without a notice in the selected period may be absent; a scoped pass does not establish a complete account-wide inventory.
 
 For a first-output evaluation, preserve the author's first complete proposal before review feedback. Use an author with no prior report or expected conclusions, then record the initial discrepancies and any revisions separately. Passing a supplied-file evaluation does not validate mailbox discovery or coverage beyond that packet. Apply independent review before the first user-facing completed output on ordinary runs, too; the user should not have to discover omitted billing events.
 
