@@ -404,7 +404,7 @@ def _assess(report, evidence_path=None):
     if not isinstance(searches, list):
         add('invalid_searches', 'searches must be an array, including an empty array in files mode.')
         searches = []
-    pages, search_ids, discovery = {}, set(), set()
+    pages, search_ids, search_coverage = {}, set(), set()
     for search in searches:
         if not isinstance(search, dict) or not _text(search.get('id')):
             add('invalid_search', 'Every search needs an ID.')
@@ -420,13 +420,6 @@ def _assess(report, evidence_path=None):
         if kind not in {'merchant_discovery', 'billing', 'lifecycle'} or not _text(query):
             add('invalid_search', f'{sid}: valid kind and exact query are required.')
             continue
-        if kind == 'merchant_discovery':
-            # Ignore sender/address tokens; catch obvious keyword-only restrictions.
-            terms = re.sub(r'\b(?:from|to):[^\s()]+', '', query, flags=re.I)
-            if re.search(r'\b(?:invoices?|receipts?|payments?|paid|charges?|billing)\b', terms, re.I):
-                add('narrow_merchant_discovery', f'{sid}: merchant discovery is narrowed by English billing keywords.')
-            else:
-                discovery.update(refs)
         raw = local_file(search.get('result_file'), sid, parse=True)
         if isinstance(raw, dict) and raw.get('isError'):
             add('failed_search', f'{sid}: saved tool result reports an error.')
@@ -447,6 +440,7 @@ def _assess(report, evidence_path=None):
         if key in pages:
             add('duplicate_search_page', f'{sid}: same query and page token recorded more than once.')
         pages[key] = (next_token, set(refs))
+        search_coverage.update(refs)
         counts['search_results'] += len(results)
         for entry in results:
             mid = entry.get('id') if isinstance(entry, dict) else entry
@@ -482,8 +476,8 @@ def _assess(report, evidence_path=None):
         if {t for q, t in pages if q == query} - seen:
             add('disconnected_search_page', f'Saved pages are not reachable from the first page: {query}')
     if scope and scope['mode'] == 'mailbox':
-        for sid in by_service.keys() - discovery:
-            add('missing_merchant_discovery', 'No broad merchant discovery search is recorded.', sid)
+        for sid in by_service.keys() - search_coverage:
+            add('missing_search_coverage', 'No mailbox search with a saved result page covers this service or case.', sid)
     if scope and scope['mode'] == 'files' and not source_map:
         add('empty_file_scope', 'Files-only review must declare the supplied sources.')
 

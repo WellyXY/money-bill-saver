@@ -1,6 +1,6 @@
 # Email search checklist
 
-When keyword searches return hundreds of newsletters, start with transaction channels, identify merchants, then complete each merchant's lifecycle search before status or absence claims. Run separately for each selected mailbox.
+Start with transaction channels, identify bills and services, then check related account events that could change a conclusion. Run separately for each selected mailbox. Automatic collection stays focused on billing and relevant account events; broader discovery is reserved for a user-requested follow-up.
 
 ## 1. Fix the account and time window
 
@@ -8,11 +8,11 @@ When keyword searches return hundreds of newsletters, start with transaction cha
 - [ ] Inspect query, paging and message-read fields. Translate these [Gmail operators](https://support.google.com/mail/answer/7190?hl=en) to supported fields on other hosts; record lost coverage.
 - [ ] Replace `<DATES>` in every example with `after:<START_YYYY/MM/DD> before:<END_EXCLUSIVE_YYYY/MM/DD>`. Replace all remaining placeholders; none is literal Gmail syntax.
 - [ ] Set the exclusive end to the day after the last covered date: September 1–30 uses `after:2026/09/01 before:2026/10/01`. For the Gmail API, date literals mean midnight PST; use epoch seconds when exact timezone bounds matter and the host supports them. Check boundary-message timestamps. See [API filtering](https://developers.google.com/workspace/gmail/api/guides/filtering).
-- [ ] Use the user's dates; otherwise state a last-13-month window within the authorized scope to catch annual renewals. Honor an explicit all-history request. Search message dates to retrieve evidence, then read the actual charge, invoice and service-period dates separately.
+- [ ] Use the user's dates; otherwise cover the last six calendar months through the audit date in the selected timezone. For September 16, start March 16; clamp to the last valid day when needed. Record the actual bounds. Annual plans with no notice in this period may be absent; state this limitation without automatically extending the period. Honor an explicit longer-period request. Search message dates, then read actual charge, invoice and service-period dates separately.
 
 ## 2. Run separate candidate searches
 
-Use short date slices for high volume. These are `billing` or `lifecycle` searches, not completed `merchant_discovery`. Run relevant channels; record skips and reasons.
+Use `billing` or `lifecycle` for these focused searches. Run the channels relevant to the available host and task; record skips and reasons. There is no mandatory merchant-wide pass afterward.
 
 **Purchases category — `billing`**
 
@@ -61,21 +61,25 @@ For other mailbox languages, replace or extend the phrase sets using terms actua
 
 - [ ] Read result headers/snippets first to identify candidates. Fetch full bodies for relevant or ambiguous messages; fetch raw MIME only for identified messages whose complete content or attachments require it. Follow the attachment procedure in [billing-review.md](billing-review.md).
 - [ ] Group clear promotions for efficient triage, retaining each message ID and a specific reason. Subject keywords alone cannot exclude an ambiguous plan, trial or account notice. Promotions can carry useful account leads.
-- [ ] Prefer sender + short date windows over one giant keyword OR query. If using `-category:promotions` to prioritize a pass, record that exclusion and remove it for merchant closure; it is never a permanent coverage rule.
+- [ ] Prefer confirmed senders plus billing/event terms over bare brand words. For shared payment senders, include the observed merchant/account identifier. If a category exclusion prioritizes a pass, record it and use focused sender/event checks for relevant notices that may be misclassified.
 - [ ] Follow every page token with the same exact query until it ends. A result estimate or the first 100/200 items is not completion. Gmail's [list API](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list) returns IDs and paging metadata; retrieve message content separately when needed.
 - [ ] Split future queries by month/week or merchant when the host truncates results. Cover the whole declared interval, overlap uncertain boundary days and deduplicate by mailbox + message ID. Preserve the original query/result; splitting cannot erase an unfinished page chain already recorded in the audit manifest. Unrecoverable truncation stays provisional.
 
-## 4. Close each merchant's lifecycle search
+## 4. Check related account events
 
-For every discovered or user-named service, run `merchant_discovery` across the authorized dates using brand, seller, known domains and sender aliases, without billing keywords, category restrictions or promotional exclusions:
+Before a current-status, renewal or unresolved-payment conclusion, check relevant events within the selected period using confirmed sender/account identifiers or the related thread. Follow a cancellation, failure or promised refund through later messages for that same event. Adapt event words to the source language:
 
 ```text
-<DATES> {from:<MERCHANT_DOMAIN> from:<KNOWN_SENDER_ALIAS> "<BRAND>" "<SELLER_NAME>"}
+<DATES> {from:<KNOWN_SENDER> from:<KNOWN_SENDER_ALIAS>} {cancelled canceled refund refunded renewal "plan changed" "payment failed" "trial ends" 已取消 退款 續訂 付款失敗}
 ```
 
-For shared platforms, add a separate search using the observed app/product/account identifier; a Stripe/Apple domain alone does not identify a merchant. Explicitly include aliases: Gmail API searches do not expand them or match whole threads like the Gmail UI does. These are [documented API differences](https://developers.google.com/workspace/gmail/api/guides/filtering).
+The sender group and event group are combined with AND; keep brand words out of the sender OR group. Select relevant terms, such as upgrade, downgrade, credit, reinstatement or resource deletion, for the actual service and question. A complete related thread can supply these events without another search. A dated invoice alone cannot establish that auto-renewal is enabled.
 
-Add `in:anywhere` only when Spam and Trash are in the authorized scope; set the host's Spam/Trash inclusion option too if required. Otherwise describe the folders excluded. Complete every page and reconcile cancellations, upgrades/downgrades, failed and successful payments, refunds, trial outcomes and reinstatements. Keep date-limited conclusions date-limited.
+For shared platforms, include the observed app/product/account identifier; a Stripe/Apple domain alone does not identify a merchant. Include known aliases explicitly: Gmail API searches do not expand aliases or match whole threads like the Gmail UI does. See [API differences](https://developers.google.com/workspace/gmail/api/guides/filtering).
+
+For a user-named service missing from channel results, run a focused service + billing/event query in the same period. Keep an unresolved inventory row if no supporting record is found. Missing receipts or conflicting evidence produce a stated gap and a concrete follow-up; they do not automatically trigger unrestricted brand searches or a longer date range. Broader discovery can be performed when the user requests that investigation.
+
+Add `in:anywhere` only when Spam and Trash are authorized; otherwise state the excluded folders. Keep absence claims specific: “No receipt found in these searches during this period,” not “No subscription exists.”
 
 ## 5. Record and finish
 
@@ -89,6 +93,7 @@ For a shared query associated with already discovered `service-a` and `service-b
 {"id":"gmail:promo-message-id","service_ids":["service-a","service-b"],"kind":"message","disposition":"irrelevant","note":"Sender, subject and snippet identify a generic webinar invitation; no account, payment or lifecycle event for either service."}
 ```
 
-- [ ] Stop when the chosen channel passes and every merchant's broad pass are paged and triaged, relevant bodies/attachments are read, and later events are reconciled. Carry unresolved access, identity or coverage gaps into the provisional report. These searches do not prove complete knowledge of the user's accounts.
+- [ ] Finish when the chosen channel searches and relevant targeted checks are paged and triaged, material bodies/attachments are read, and report conclusions reflect relevant later events. Each reported service/case needs recorded search coverage, including a focused no-result search for an unsupported user-named service. Invoice/receipt filters are valid coverage; unrestricted merchant searches are not required.
+- [ ] Preserve explicit unknowns and the period boundary. Missing activity, price or older annual-plan evidence is not a reason to invent values or expand the search. Material unread/truncated sources and incomplete independent review keep the report provisional under the evidence contract. A checked report describes the declared evidence, not every subscription the user may have.
 
 Primary guidance checked September 16, 2026. Adapt the starting queries to observed senders and languages.

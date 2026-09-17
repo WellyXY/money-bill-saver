@@ -95,11 +95,11 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 
 ## Completion checks before the first report
 
-Before concluding that invoices, payments or later account changes are missing, run a merchant/seller/provider search without billing keyword restrictions. Read localized billing and lifecycle messages, every available result page, full message bodies and relevant attachments. Later cancellation, plan changes, low-balance notices and resource removal can change an earlier conclusion.
+Mailbox reviews default to the last **six calendar months**, unless you request another period. Start with billing channels, then use targeted sender/account/thread checks for cancellations, refunds and plan or payment changes. Read the selected query pages and relevant messages/attachments. Automatic brand-wide searches are off; unresolved questions stay visible for a separate follow-up. Annual plans without a notice in the selected period may be absent.
 
 New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
 
-The executable gate checks collection closure, unreviewed records, attachment coverage, review findings and stale bindings. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
+The executable gate checks scoped search coverage, selected pagination, unreviewed records, attachment coverage, review findings and stale bindings. Focused billing/lifecycle searches satisfy coverage; an unrestricted merchant pass is not required. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
 
 ```sh
 python skills/money-bill-saver/scripts/check_audit.py \
@@ -140,7 +140,7 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 ## Context use and design guidance
 
-`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with payment channels, app stores, card alerts and trial notices, then closes merchant lifecycle searches before conclusions.
+`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with payment channels, app stores, card alerts and trial notices, then checks related account events through targeted queries or the relevant thread within the selected scope.
 
 Reports use the fixed template. Ordinary runs read the short [webpage preflight](skills/money-bill-saver/references/web-design.md) and only **Section 14: FINAL PRE-FLIGHT CHECK** of the bundled [design-taste-frontend guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check). Its landing-page and framework rules do not override financial evidence or trigger a redesign. The full guide remains available for an explicitly requested redesign.
 
