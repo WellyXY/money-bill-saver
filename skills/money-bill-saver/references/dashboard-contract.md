@@ -39,7 +39,7 @@ The helper expands structure. It never reads evidence, decides a status, infers 
 
 ## Render
 
-Every audit webpage run must first read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). The integration preserves this contract's financial semantics, three sections, complete inventory and private offline output.
+For a routine audit using the existing renderer, read [web-design.md](web-design.md) and verify its preflight. Read the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md) when changing the template, layout or visual style. The integration preserves this contract's financial semantics, three sections, complete inventory and private offline output.
 
 Resolve the script and input/output paths from the installed skill and task directory:
 

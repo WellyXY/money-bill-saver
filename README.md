@@ -49,12 +49,12 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 
 ## Workflow
 
-1. Discover services from bills, receipts and welcome, plan, trial, renewal and cancellation notices. Keep services named by the user even when no receipt is found.
+1. Search known merchants and high-signal bill, receipt, welcome and trial messages. Prefer search results with sender, subject and date metadata; save pages once and group candidates locally before opening full messages. Keep services named by the user even when no receipt is found.
 2. Classify invoices, settled receipts, payment attempts, estimates, credits and incoming reimbursements before calculating totals.
 3. Follow later events for the same account and transaction. A newer payment or plan confirmation can change an earlier conclusion while the full timeline remains available.
 4. Check invoice arithmetic, identity, service periods, rates, usage and potential duplicate payments. Record evidence gaps explicitly.
 5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
-6. Apply the bundled design guidance, expand the findings into report data with `scripts/build_report.py`, and render the three-section webpage with evidence, actions and local drafts.
+6. Expand the findings into report data with `scripts/build_report.py` and render the existing three-section webpage with evidence, actions and local drafts. Apply the bundled design guidance when changing its visual design.
 7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
 
 ## Completion checks before the first report
@@ -99,7 +99,7 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 ## Bundled design guidance
 
-Every audit webpage run must read the integration in [`web-design.md`](skills/money-bill-saver/references/web-design.md) and the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md). The full design source is included inside this skill; installation does not depend on a separate personal skill path.
+For a routine audit, use the existing renderer and verify the output with [`web-design.md`](skills/money-bill-saver/references/web-design.md). Read the complete bundled [`design-taste-frontend` skill](skills/money-bill-saver/references/design-taste-frontend/SKILL.md) when changing the template, layout or visual style. The full design source is included inside this skill; installation does not depend on a separate personal skill path.
 
 The original design skill primarily targets landing pages and explicitly excludes dashboards and data tables. The integration applies its relevant typography, color, spacing, layout, accessibility and preflight guidance to a financial document. Audit evidence, privacy, exhaustive inventory and the three required sections take precedence over marketing-page conventions.
 
@@ -107,7 +107,17 @@ The page uses native CSS and self-contained assets. Light and dark themes, respo
 
 ## Local tools
 
-The tools have been tested with Python 3.12. Invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable. Raw email decoding uses the standard library and reuses the PDF extractor for PDF attachments.
+The tools have been tested with Python 3.12. Candidate indexing, invoice checks and webpage rendering use the Python standard library. PDF text extraction uses `pypdf` or an installed Poppler `pdftotext` executable. Raw email decoding uses the standard library and reuses the PDF extractor for PDF attachments.
+
+Save metadata-rich mail search results once, then build a private navigation index before fetching full messages:
+
+```sh
+python3 skills/money-bill-saver/scripts/index_mail_candidates.py \
+  --input private-task/saved-search-1.json --input private-task/saved-search-2.json \
+  --output private-task/candidate-index.json --summary-output private-task/candidate-summary.json
+```
+
+Store raw metadata search pages under a private task directory (`0700` directory, `0600` files); they contain subjects and snippets. Include the exact query and, when multiple mailboxes are in scope, a `mailbox` label in each saved search bundle. Build a separate index per mailbox. The index groups sender domains and subject patterns, deduplicates message IDs within that mailbox, flags ID-only results that still need metadata and reports incomplete page chains. `saved_query_pages_complete` refers only to the saved query chains, not to complete mailbox coverage. Read the bounded private summary first; if any count in `omitted_groups` exceeds zero, inspect those groups from the private full index before claiming the scope reviewed. It does not classify charges or replace reading relevant billing evidence.
 
 Install the tested dependencies in an isolated environment:
 
@@ -246,7 +256,7 @@ Browser and visual checks are separate from these automated tests. Use the host'
 ## v0.4.0
 
 - English defaults for reports, interface text, exports, examples and repository documentation, with explicit language overrides.
-- A full portable copy of `design-taste-frontend`, required reading for every audit webpage run.
+- A full portable copy of `design-taste-frontend` for changes to the audit webpage's design.
 - Audit-specific design integration that preserves the complete financial inventory, three-section structure, private data and offline delivery.
 - Refined page presentation with theme, responsive-layout and interaction guidance while retaining the existing evidence and cost boundaries.
 

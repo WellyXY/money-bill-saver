@@ -16,7 +16,7 @@ A single-charge audit keeps the three web sections scoped to that charge/service
 
 ## Visual document
 
-Before producing any audit webpage, read [web-design.md](web-design.md) and the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md). Use the audit integration guidance to apply appropriate design rules while preserving financial evidence and the complete inventory.
+For a routine audit, use the existing self-contained renderer and check its output with [web-design.md](web-design.md), preserving financial evidence and the complete inventory. Read the complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md) when changing the template, layout or visual style.
 
 Read [dashboard-contract.md](dashboard-contract.md) for the renderer schema and validation boundary. The default audit page presents these three sections in order:
 

@@ -1,8 +1,8 @@
 # Audit webpage design integration
 
-## Required reading for every webpage run
+## Design guidance for audit webpages
 
-Before producing or revising an audit webpage, read this integration and the **complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md)**, including its preflight. The bundled file is a full, unmodified portable copy, not a summary or a dependency on another user's skill directory. Resolve it relative to this reference. Explanatory answers that do not produce a webpage do not require the design pass.
+For a routine audit using the existing renderer, read this integration and verify the generated page against its preflight. Read the **complete bundled [design-taste-frontend skill](design-taste-frontend/SKILL.md)** when changing the template, layout or visual style. The bundled file is a full, unmodified portable copy, not a dependency on another user's skill directory. Resolve it relative to this reference. Explanatory answers that do not produce a webpage do not require the design pass.
 
 ## Apply the design brief honestly
 
@@ -37,7 +37,7 @@ The output remains one self-contained HTML document backed by JSON/CSV exports. 
 
 ## Preflight
 
-Read the bundled preflight in full, then apply each relevant check to this financial-document brief. Mark marketing-only checks as inapplicable with a brief reason; do not add imagery, truncate evidence or convert the page into a landing page merely to tick them.
+For a routine audit with the existing renderer, apply the checks below. When changing the template, layout or visual style, read the bundled preflight in full and apply its relevant checks to this financial-document brief. Mark marketing-only checks as inapplicable with a brief reason; do not add imagery, truncate evidence or convert the page into a landing page merely to tick them.
 
 Before delivery, verify:
 
