@@ -2,7 +2,7 @@
 
 A Codex skill for reviewing bills and subscriptions across merchants, investigating possible overcharges or unused paid services, and preparing support requests with traceable evidence.
 
-**Version: v0.7.0 / Stage 0**
+**Version: v0.8.0 / Stage 0**
 
 The primary output is a private, self-contained webpage. Reports, interface copy, exports and repository documentation default to **English** unless another output language is explicitly requested.
 
@@ -56,6 +56,24 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
 6. Apply the bundled design guidance and render the three-section webpage with evidence, actions and local drafts.
 7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
+
+## Completion checks before the first report
+
+Before concluding that invoices, payments or later account changes are missing, run a merchant/seller/provider search without billing keyword restrictions. Read localized billing and lifecycle messages, every available result page, full message bodies and relevant attachments. Later cancellation, plan changes, low-balance notices and resource removal can change an earlier conclusion.
+
+New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
+
+The executable gate checks collection closure, unreviewed records, attachment coverage, review findings and stale bindings. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/subscription-audit/references/audit-evidence-contract.md):
+
+```sh
+python skills/subscription-audit/scripts/check_audit.py \
+  --report dashboard.json --evidence audit-evidence.json --output audit-checks.json
+python skills/subscription-audit/scripts/render_dashboard.py \
+  --input dashboard.json --evidence audit-evidence.json \
+  --require-checked --output dashboard.html
+```
+
+An incomplete audit can still be rendered as a clearly labeled preliminary report by omitting `--require-checked`. Without a manifest, legacy reports and examples are preliminary by default. A completed check applies to the declared source scope; facts and refund conditions absent from that scope remain unknown. The gate cannot independently judge every extraction or authenticate the reviewer's identity, so original-source review remains part of the workflow.
 
 ## Install and use
 
@@ -119,7 +137,7 @@ python skills/subscription-audit/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-All three tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
+All four tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
 ## Cost and evidence semantics
 
@@ -152,7 +170,16 @@ python -m unittest discover -s tests/subscription-audit -p 'test_*.py'
 
 The synthetic test suite covers decimal arithmetic, document identity and duplicate observations, incomplete or conflicting records, PDF extraction and damaged-text warnings, varied billing cycles, cross-merchant cases, safe webpage data embedding, monthly subtotal boundaries and issue classification.
 
+Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. They verify the gate's behavior; they do not replace factual review of real documents.
+
 Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+
+## v0.8.0
+
+- Merchant/provider discovery and later lifecycle reconciliation before missing-evidence conclusions.
+- Executable coverage and independent-review gate, including raw search pagination and MIME attachment checks.
+- Final rendering rejects incomplete checks; preliminary results display unresolved checks.
+- Review bindings detect changes to service/case rows, overall costs and summaries, or underlying evidence after review.
 
 ## v0.7.0
 
@@ -202,5 +229,6 @@ Mailbox discovery can be incomplete, and a current service inventory may require
 - [Facts and outcomes contract](skills/subscription-audit/references/facts-contract.md)
 - [Deliverables](skills/subscription-audit/references/deliverables.md)
 - [Dashboard data contract](skills/subscription-audit/references/dashboard-contract.md)
+- [Evidence and completion gate contract](skills/subscription-audit/references/audit-evidence-contract.md)
 - [Web design integration](skills/subscription-audit/references/web-design.md)
 - [Bundled design skill](skills/subscription-audit/references/design-taste-frontend/SKILL.md)

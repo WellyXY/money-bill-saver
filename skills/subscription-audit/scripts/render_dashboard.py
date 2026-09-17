@@ -7,6 +7,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 import json
+import importlib.util
 from pathlib import Path
 import re
 
@@ -247,8 +248,16 @@ def prepare(report):
     return report
 
 
-def render(report):
+def render(report, evidence_path=None, require_checked=False):
     report = prepare(report)
+    spec = importlib.util.spec_from_file_location('audit_gate', Path(__file__).with_name('check_audit.py'))
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    quality = gate.assess(report, evidence_path)
+    # Recompute from local evidence and review artifacts; never trust a display flag in the report.
+    report['computed']['audit_quality'] = quality
+    if require_checked and quality['status'] != 'checked':
+        raise ValueError('Audit coverage is provisional. Complete the evidence and independent review checks before final rendering.')
     template = Path(__file__).resolve().parents[1] / 'assets' / 'dashboard.html'
     serialized = json.dumps(report, ensure_ascii=False, allow_nan=False)
     # JSON lives in an inert script element; escape HTML delimiters and JS separators.
@@ -264,11 +273,13 @@ def main():
     parser.add_argument('--input', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--force', action='store_true')
+    parser.add_argument('--evidence', type=Path, help='Evidence collection and independent review manifest')
+    parser.add_argument('--require-checked', action='store_true', help='Refuse a final report if evidence/review checks are incomplete')
     args = parser.parse_args()
     if args.output.exists() and not args.force:
         parser.error('Output exists; use --force to replace it')
     try:
-        page = render(json.loads(args.input.read_text(encoding='utf-8')))
+        page = render(json.loads(args.input.read_text(encoding='utf-8')), args.evidence, args.require_checked)
     except (ValueError, KeyError, TypeError) as exc:
         parser.error(str(exc))
     args.output.parent.mkdir(parents=True, exist_ok=True)

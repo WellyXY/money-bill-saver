@@ -19,6 +19,16 @@ def service(sid='sample', amount='9.90', currency='USD'):
 
 
 class DashboardTests(unittest.TestCase):
+    def test_final_render_rejects_missing_evidence_gate(self):
+        with self.assertRaisesRegex(ValueError, 'coverage is provisional'):
+            dashboard.render({'subscriptions': [service()]}, require_checked=True)
+
+    def test_render_does_not_trust_embedded_checked_flag(self):
+        report = {'subscriptions': [service()], 'computed': {'audit_quality': {'status': 'checked'}}}
+        page = dashboard.render(report)
+        embedded = json.loads(re.search(r'<script id="report-data" type="application/json">(.*?)</script>', page, re.S).group(1))
+        self.assertEqual(embedded['computed']['audit_quality']['status'], 'provisional')
+
     def test_currency_totals_are_exact_and_separate(self):
         r = dashboard.prepare({'subscriptions': [service('a', '0.10'), service('b', '0.20'), service('c', '100', 'TWD')]})
         self.assertEqual(r['computed']['known_monthly'], {'USD': '0.30', 'TWD': '100.00'})

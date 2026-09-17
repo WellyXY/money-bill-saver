@@ -13,6 +13,7 @@ Use a short design read before page work: a calm, precise financial document for
 ## Preserve the audit
 
 - Keep the three sections in order: **Current services**, **Refund questions**, **Other issues**. Retain explicit empty states.
+- Show the renderer's evidence-completion status above the inventory. A preliminary report needs a visible label and specific unresolved checks; styling must not imply that source coverage or independent review has passed.
 - Keep every discovered or user-named service in the data and accessible in the page, including uncertain, normal and resolved entries. Filters may narrow a view, but show the result count and a clear way to restore all items. Do not replace a complete inventory with selected highlights, a carousel or decorative tiles.
 - Present status/dates and monthly costs as two views of one inventory. Use accessible tabs and shared filters; explain that listed entries include uncertain and historical services. Keep a full-inventory baseline explicitly labeled when filters hide rows.
 - Highlight proactive review leads with words and a semantic color in both views. Show their reason and next check in a separate queue within Refund questions, before specific refund cases. Count leads separately from claims and never style a possible-overlap or usage-unknown signal as confirmed refund eligibility.

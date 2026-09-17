@@ -28,7 +28,13 @@ Use absolute paths when running the command. Existing output requires `--force`.
 
 The template uses embedded CSS/JavaScript and system or self-contained embedded fonts. Keep it self-contained: no remotely loaded fonts, analytics, raw email HTML or tracking images. The interface and report data default to English; use another output language only when explicitly requested. Retain original source quotations and identifiers with translations as needed. Publishing private dashboard data requires separate authorization.
 
-## Top-level object
+## Evidence completion status
+
+For new audits, follow [audit-evidence-contract.md](audit-evidence-contract.md) and supply `--evidence audit-evidence.json`. Use `--require-checked` when producing a completed report. An absent manifest, unreviewed source, unfinished result page, missing independent review or stale review binding makes the output preliminary. The renderer recomputes `computed.audit_quality`; an input value cannot override it. It rejects final rendering when required checks have not passed.
+
+Keep the quality status visible above the service inventory, with the declared scope and unresolved checks. Source-scoped completion does not convert an unknown charge date, current price or refund condition into a confirmed fact. A report can correctly pass with explicitly unknown facts when source collection and independent review are complete within its declared scope.
+
+## Top-level fields
 
 | Field | Type | Meaning |
 |---|---|---|
