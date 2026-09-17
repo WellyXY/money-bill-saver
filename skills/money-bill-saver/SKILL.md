@@ -37,7 +37,7 @@ The builder creates `dashboard.json` and a self-contained `dashboard.html`. The 
 
 ### 4. Preview and deliver (target: 30s)
 
-Open the page once and check that the service list, cost sheet and two issue sections reflect `quick.json`; correct a demonstrated output error. Deliver the private webpage, top actions and material gaps. Report checks actually performed. The first useful page is the completion point for the default run.
+Run `python scripts/preview_quick.py --output-dir /private/run` to check the generated page sections and embedded report data. If a browser is already available, open the page once for a quick visual check; do not spend the first-page budget setting up a browser. Correct a demonstrated output error. Deliver the private webpage, top actions and material gaps. Report checks actually performed. The first useful page is the completion point for the default run.
 
 ## Optional detailed verification
 
