@@ -20,6 +20,7 @@ The fixed report template needs only the design preflight in step 5, not the ful
 
 - Infer **recover** for a particular charge, **manage** for an inventory, or **both** for a broad review.
 - Preserve the requested vendors, accounts and dates. A single-charge task stays narrow.
+- Default mailbox reviews to the last six calendar months; use a different period when the user specifies it.
 - Use supplied files or an authorized source available in this host. Installation does not authorize mailbox access.
 - Discover accounts and capabilities through host tools; never inspect token or credential stores.
 - With several mailbox connections, select the requested account explicitly; keep account identities separate.
@@ -33,7 +34,8 @@ The fixed report template needs only the design preflight in step 5, not the ful
 
 Read [email-search-checklist.md](references/email-search-checklist.md) before the first search.
 Use its scoped Stripe, purchase-category, app-store, card-alert and trial searches to discover candidates.
-Then close each merchant's unrestricted lifecycle search before concluding current status, latest dates or absence of evidence.
+Use targeted sender/account/thread checks for relevant cancellations, refunds and plan or payment changes.
+Keep automatic searches within this billing scope; broader discovery is a separate user-requested follow-up.
 Triage search results before fetching full raw messages; retrieve attachments for relevant or uncertain billing/lifecycle records.
 Keep every user-named service visible even when no receipt is found.
 
@@ -121,6 +123,7 @@ Marketing-only checks do not justify new imagery, shortened inventories, changed
 ## 6. Review, render and deliver
 
 Read [Source review before output](references/deliverables.md#source-review-before-output) and [Independent review bound to the report](references/audit-evidence-contract.md#independent-review-bound-to-the-report).
+Finish the selected searches and material evidence review; report unsupported dates, costs and status as unknown within the stated period.
 Have an independent reviewer compare the final service/case rows with the relevant original evidence, not just the author's summary.
 Record findings and resolve correctable omissions, later events, dates, costs and superseded drafts.
 

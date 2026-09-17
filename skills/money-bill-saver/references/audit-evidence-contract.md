@@ -10,15 +10,15 @@ Keep this evidence bundle private. Place `audit-evidence.json` at the bundle roo
 {
   "scope": {
     "mode": "mailbox",
-    "description": "All available Acme merchant mail, including archived, spam and trash messages, reviewed through the stated date.",
+    "description": "Focused Acme billing and related account-event searches, March 16–September 16, 2026; selected mailbox including archived mail, excluding spam and trash.",
     "as_of": "2026-09-16"
   },
   "searches": [
     {
-      "id": "acme-discovery-page-1",
+      "id": "acme-billing-page-1",
       "service_ids": ["acme"],
-      "kind": "merchant_discovery",
-      "query": "in:anywhere (from:acme.example OR Acme)",
+      "kind": "billing",
+      "query": "after:2026/03/16 before:2026/09/17 from:acme.example {invoice receipt payment}",
       "result_file": "searches/acme-1.json"
     }
   ],
@@ -50,9 +50,11 @@ Keep this evidence bundle private. Place `audit-evidence.json` at the bundle roo
 
 ## Search coverage
 
-Every mailbox service and other case needs a broad `merchant_discovery` search. After initial channel discovery, search each merchant by names, sender domains and aliases without billing-term or category restrictions before concluding latest state, dates or absence. Use [email-search-checklist.md](email-search-checklist.md) for the staged search procedure. Do not discover subscriptions using only English `invoice`, `receipt`, `payment`, `paid`, `charge`, or `billing` keywords: those searches miss localized invoices and lifecycle notices. The checker rejects these obvious English restrictions in discovery queries, but it cannot prove that a query contains every merchant alias or is semantically broad enough. The reviewer must assess that coverage.
+Every mailbox service and other case needs recorded coverage from a `billing` or `lifecycle` search within the selected account/date scope. Focused invoice/receipt queries and channel searches can provide this coverage; use targeted sender/account/thread checks for relevant state changes. Follow [email-search-checklist.md](email-search-checklist.md) for the default period, query choices and stopping condition. Automatic unrestricted merchant discovery is not part of the default workflow. The legacy `merchant_discovery` kind remains accepted for existing bundles and separately requested investigations.
 
-Additional searches use `kind: "billing"` or `"lifecycle"`. Preserve the exact query and actual raw tool result for every page. Supported raw result forms are `{"structuredContent":{"emails":[{"id":"..."}],"next_page_token":null}}` or an equivalent direct object with `emails[]` or `ids[]`. The checker reads the saved IDs and pagination token; manually supplied counts are not a substitute.
+The checker requires a recorded search association for each reported entity; it accepts billing terms and category filters. It cannot judge query relevance, infer an absent subscription or prove that all aliases were searched. The reviewer checks whether material conclusions are supported within the declared scope. Unknown facts may remain unknown after a completed scoped review; material unread evidence still prevents a checked result.
+
+Preserve the exact query and actual raw tool result for every page. Supported raw result forms are `{"structuredContent":{"emails":[{"id":"..."}],"next_page_token":null}}` or an equivalent direct object with `emails[]` or `ids[]`. The checker reads the saved IDs and pagination token; manually supplied counts are not a substitute. A saved no-result search is valid scope evidence, not proof that a named service does not exist.
 
 Search entries must use `result_file`; source entries must use `file`. A source-style `file` key on a search, or a search-style `result_file` key on a source, is rejected as ambiguous. Evidence hashing reads the collection-specific field used by the checker, so an extra field cannot substitute unrelated bytes for the actual reviewed search result or source.
 
@@ -81,7 +83,7 @@ Attachment entries need `parent_id` matching the parent message source and `atta
 
 `scripts/extract_mime.py` converts saved Gmail RAW JSON (direct or wrapped in `structuredContent`) or an `.eml` file into a full MIME `message.json`. The original input is saved alongside the conversion. Raw MIME parts have deterministic tree-based `part_id` values, rather than invented Gmail attachment IDs; keep the helper's parent/part associations when integrating them.
 
-Each manifest message carries suggested `evidence_sources` entries with empty `service_ids` and paths relative to the helper's output directory. Place that directory below the bundle root, prefix each source `file` accordingly, and add the appropriate service IDs. Extraction starts sources as `unread` (or `inaccessible` when an attachment cannot be saved). Change a disposition only after the content has actually been read. A helper manifest describes its supplied messages; it does not replace merchant discovery, pagination, factual analysis or independent review.
+Each manifest message carries suggested `evidence_sources` entries with empty `service_ids` and paths relative to the helper's output directory. Place that directory below the bundle root, prefix each source `file` accordingly, and add the appropriate service IDs. Extraction starts sources as `unread` (or `inaccessible` when an attachment cannot be saved). Change a disposition only after the content has actually been read. A helper manifest describes its supplied messages; it does not replace scoped search coverage, pagination, factual analysis or independent review.
 
 Converted `message.json` records contain `extraction.schema_version: "1"` and `extraction.files`. Each file record contains `role`, `file` and its exact-byte `sha256`. There is exactly one `original` input, plus the body text, saved attachments and generated attachment text/PDF artifacts. These paths are relative to the directory containing `message.json`; keep them unchanged when moving the whole bundle. They must remain within that message directory and the audit bundle. The checker validates these files and includes their bytes in the evidence digest. Keep `message.json` out of its own file list to avoid a circular hash. `raw_sha256` records the decoded original email bytes; a stored hash alone is not a substitute for the original file.
 
@@ -111,7 +113,7 @@ The checker confirms file presence and declared review coverage. The agent and i
 
 The reviewer must independently inspect evidence, not merely approve the author's summary. Per service, check:
 
-- Merchant identity and account or billing-channel aliases; localized messages and all declared pages were considered.
+- Merchant identity, account and known billing-channel aliases; relevant source languages, selected period and declared pages were considered. Evaluate conclusions within that scope rather than requiring an unrestricted merchant sweep.
 - Full invoice, receipt and meaningful attachments were read; issue date, email date, service period and actual payment date are distinguished.
 - Later cancellation, trial conversion, suspension, resource deletion, refund, failure or credit events are reconciled with earlier records.
 - A zero-dollar invoice, paid-from-credit invoice, subscription price, top-up, or refund does not become a new cash charge without payment evidence.

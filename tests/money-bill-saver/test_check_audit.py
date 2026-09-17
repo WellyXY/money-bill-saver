@@ -60,10 +60,11 @@ class AuditCoverageTests(unittest.TestCase):
     def codes(self, result):
         return {i['code'] for i in result['issues']}
 
-    def mailbox(self, entries=None, next_token=None):
-        self.manifest['scope'] = {'mode': 'mailbox', 'description': 'All available Acme merchant mail including lifecycle notices.', 'as_of': '2026-09-16'}
-        self.manifest['searches'] = [{'id': 'discovery', 'service_ids': ['acme'], 'kind': 'merchant_discovery',
-                                      'query': 'in:anywhere (from:acme.example OR Acme)', 'result_file': 'page1.json'}]
+    def mailbox(self, entries=None, next_token=None, kind='billing', query=None):
+        self.manifest['scope'] = {'mode': 'mailbox', 'description': 'Acme billing evidence from March 16 to September 16, 2026.', 'as_of': '2026-09-16'}
+        self.manifest['searches'] = [{'id': 'search', 'service_ids': ['acme'], 'kind': kind,
+                                      'query': query or 'after:2026/03/16 before:2026/09/17 from:acme.example (invoice OR receipt)',
+                                      'result_file': 'page1.json'}]
         self.write('page1.json', {'structuredContent': {'emails': entries or [], 'next_page_token': next_token}})
 
     def message(self, message_id='abc', payload=None, disposition='reviewed'):
@@ -362,7 +363,16 @@ class AuditCoverageTests(unittest.TestCase):
 
     def test_truncated_pagination_blocks(self):
         self.mailbox(next_token='page2')
-        self.assertIn('incomplete_pagination', self.codes(self.assess()))
+        result = self.assess()
+        self.assertEqual(result['status'], 'provisional')
+        self.assertIn('incomplete_pagination', self.codes(result))
+
+    def test_focused_search_with_unread_message_stays_provisional(self):
+        self.mailbox([{'id': 'abc'}])
+        self.message(disposition='unread')
+        result = self.assess()
+        self.assertEqual(result['status'], 'provisional')
+        self.assertIn('unreviewed_source', self.codes(result))
 
     def test_continuation_must_match_exact_query(self):
         self.mailbox(next_token='page2')
@@ -423,12 +433,58 @@ class AuditCoverageTests(unittest.TestCase):
         self.write('page1.json', {'isError': True, 'structuredContent': {'emails': []}})
         self.assertIn('failed_search', self.codes(self.assess()))
 
-    def test_bill_keyword_query_does_not_count_as_broad_discovery(self):
+    def test_billing_only_search_with_keyword_and_category_filters_passes(self):
+        self.mailbox([{'id': 'abc'}], query='after:2026/03/16 before:2026/09/17 from:acme.example category:purchases (invoice OR receipt) -category:promotions')
+        self.message()
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_lifecycle_only_search_passes(self):
+        self.mailbox([{'id': 'abc'}], kind='lifecycle',
+                     query='after:2026/03/16 before:2026/09/17 from:acme.example (cancelled OR renewal)')
+        self.message(payload={'mime_type': 'text/plain', 'body': {'content': 'Your Acme renewal is cancelled.'}})
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_legacy_merchant_discovery_search_passes(self):
+        self.mailbox(kind='merchant_discovery', query='in:anywhere (from:acme.example OR Acme)')
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_legacy_search_kind_with_billing_keywords_passes(self):
+        self.mailbox(kind='merchant_discovery', query='from:acme.example (invoice OR receipt)')
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_mailbox_without_search_coverage_stays_provisional(self):
         self.mailbox()
-        self.manifest['searches'][0]['query'] = 'from:acme.example (invoice OR receipt)'
+        self.manifest['searches'] = []
         result = self.assess()
-        self.assertIn('narrow_merchant_discovery', self.codes(result))
-        self.assertIn('missing_merchant_discovery', self.codes(result))
+        self.assertEqual(result['status'], 'provisional')
+        self.assertEqual(self.codes(result), {'missing_search_coverage'})
+        self.assertEqual(result['issues'][0]['service_id'], 'acme')
+
+    def test_search_for_one_service_does_not_cover_another(self):
+        self.mailbox()
+        service = {'id': 'beta', 'name': 'Beta', 'status': 'uncertain'}
+        self.report['subscriptions'].append(service)
+        self.manifest['sources'][0]['service_ids'].append('beta')
+        self.review['services'].append({'service_id': 'beta', 'service_sha256': audit_check.service_digest(service),
+                                       'reviewed_source_ids': ['invoice'], 'verdict': 'pass',
+                                       'note': 'Checked supplied invoice; mailbox collection remains incomplete.'})
+        result = self.assess()
+        self.assertEqual(result['status'], 'provisional')
+        self.assertEqual(self.codes(result), {'missing_search_coverage'})
+        self.assertEqual(result['issues'][0]['service_id'], 'beta')
+
+    def test_search_for_service_does_not_cover_other_case(self):
+        self.mailbox()
+        case = {'id': 'deposit', 'name': 'Deposit refund', 'review_group': 'refund'}
+        self.report['other_cases'] = [case]
+        self.manifest['sources'][0]['service_ids'].append('deposit')
+        self.review['services'].append({'service_id': 'deposit', 'service_sha256': audit_check.service_digest(case),
+                                       'reviewed_source_ids': ['invoice'], 'verdict': 'pass',
+                                       'note': 'Checked supplied deposit document; mailbox collection remains incomplete.'})
+        result = self.assess()
+        self.assertEqual(result['status'], 'provisional')
+        self.assertEqual(self.codes(result), {'missing_search_coverage'})
+        self.assertEqual(result['issues'][0]['service_id'], 'deposit')
 
     def test_billing_word_in_sender_address_is_permitted(self):
         self.mailbox()
