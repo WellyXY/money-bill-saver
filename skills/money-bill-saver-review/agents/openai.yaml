@@ -1,0 +1,6 @@
+interface:
+  display_name: "Money Bill Saver Review"
+  short_description: "Independently check an existing billing report"
+  default_prompt: "Use $money-bill-saver-review to verify this existing Money Bill Saver report against its original billing evidence."
+policy:
+  allow_implicit_invocation: false

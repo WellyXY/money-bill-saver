@@ -38,7 +38,7 @@ Open a new task after installation; restart Codex if the skill does not appear. 
 
 For your own review, attach the bills you choose or specify an authorized mailbox and date range. A mailbox review needs a mail connector available in your host; this skill does not bundle one. Installing it does not grant account access.
 
-**Version: v0.8.2 / Stage 0 · [MIT](LICENSE)**
+**Stage 0 · [MIT](LICENSE)**
 
 Reports, interface copy, exports and repository documentation default to **English** unless another language is requested. The [interactive demo](https://wellyxy.github.io/money-bill-saver/) uses synthetic data and can be paused, replayed or navigated with a keyboard.
 
@@ -66,7 +66,7 @@ The inventory count includes uncertain and historical entries; it is not a count
 
 Missing update emails do not establish non-use, continued billing or refund eligibility. A gap in selected evidence is not proof that no later messages exist. Review leads are highlighted in both inventory views, carry a specific next check and do not add a refundable amount. A claim needs its own charge, period, usage or discrepancy evidence and applicable seller terms. User-reported non-use can support an honestly attributed goodwill request; it does not establish an entitlement.
 
-The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Generated JSON retains the evidence model and invoice checks; CSV and longer narrative exports are available on request. The webpage is the primary result; a Markdown report can provide additional detail.
+The document keeps the decisive source references, issue details and copyable local drafts where appropriate. Its known monthly subtotal shows the included components and unresolved prices or usage. The webpage is the primary result; longer evidence exports are available on request.
 
 ## Review coverage
 
@@ -83,33 +83,25 @@ The common workflow applies across merchants in the supplied evidence. Railway i
 
 Non-use triggers a separate refund assessment. Eligibility depends on the purchase channel, dates, applicable terms and evidence. A clearly attributed goodwill request can be appropriate when entitlement is not established. Cancelling future renewal and requesting a past-charge refund remain separate actions.
 
-## Workflow
+## The focused workflow
 
-1. Search six months of invoice/receipt subjects across senders and categories, then add payment channels, trial notices and targeted account events. Keep user-named services even without receipts.
-2. Deduplicate candidates before reading. Preserve raw messages and material attachments; inspect original PDF pages when extraction warnings, scans, ambiguous layout or conflicting values require it.
-3. Record invoices, typed payment/lifecycle events, service decisions, costs and sourced drafts once in `audit.json`. Keep accounts, currencies, failed payments and successful charges distinct.
-4. Generate the existing report, arithmetic checks and evidence views with `scripts/build_audit.py`; no run-specific report-building program is needed.
-5. Independently review frozen entity packets plus overall discovery/cost coverage. Material gaps and unavailable review keep the webpage provisional.
-6. Open the webpage for a basic data/display check and deliver the three sections with the shared cost sheet. Full mobile/theme/interaction regressions belong to template changes.
-7. Submit requests or change settings only within the user's separate authorization and the host's actual capabilities; preserve receipts and verify outcomes.
+The default run aims to produce a useful private webpage within ten minutes:
 
-## Completion checks before the first report
+1. Search six months of invoice/receipt subjects in the selected mailbox. Triage headers and snippets first; use payment channels only for a named merchant or a specific gap.
+2. Read the latest material bill for each likely current service. For an unresolved charge, refund or cancellation, check the related support conversation and later replies before recommending action.
+3. Extract text only from material attachments. Compare affected fields with the original page when a scan, conflict or extraction problem matters to the conclusion.
+4. Write a compact [`quick.json`](skills/money-bill-saver/references/quick-model.md) with service decisions, sourced costs, dates and issues. `build_quick_report.py` creates the webpage and cost sheet. Routine one-time purchases appear in a short appendix.
+5. Preview the page once and deliver it with its known gaps. The page is labeled **Focused billing review**; it does not claim independent verification.
 
-Mailbox reviews default to the last **six calendar months**, unless you request another period. Start with generic invoice/receipt subjects across senders and categories plus applicable billing channels, then use targeted sender/account/thread checks for cancellations, refunds and plan or payment changes. Read the selected query pages and relevant messages/attachments. Automatic brand-wide searches are off; unresolved questions stay visible for a separate follow-up. Annual plans without a notice in the selected period may be absent.
-
-New audits author one [canonical audit model](skills/money-bill-saver/references/audit-model.md) and generate an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Shared discovery stays separate from actual service evidence. Another reviewer checks relevant originals against each proposed row and checks global discovery exclusions/cost inputs. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
-
-The executable gate checks scoped search coverage, selected pagination, unreviewed records, attachment coverage, review findings and stale bindings. Canonical mailbox runs must record the generic billing search strategy and actual query chains. Relevant discovery-source links or focused billing/lifecycle searches establish per-entity coverage; an unrestricted merchant pass is not required. Legacy evidence files remain readable, and declared search strategy does not prove every relevant query was chosen. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
+The first page is the normal completion point. Full source re-reading, audit packets and independent review run only when you ask for them via the separate [`money-bill-saver-review`](skills/money-bill-saver-review/SKILL.md) skill. Its Codex invocation is explicit-only. Install it only if you want that extra pass:
 
 ```sh
-python skills/money-bill-saver/scripts/check_audit.py \
-  --report dashboard.json --evidence audit-evidence.json --output audit-checks.json
-python skills/money-bill-saver/scripts/render_dashboard.py \
-  --input dashboard.json --evidence audit-evidence.json \
-  --require-checked --output dashboard.html
+npx --yes skills add WellyXY/money-bill-saver --skill money-bill-saver-review --agent codex --global --yes
 ```
 
-An incomplete audit can still be rendered as a clearly labeled preliminary report by omitting `--require-checked`. Without a manifest, legacy reports and examples are preliminary by default. A completed check applies to the declared source scope; facts and refund conditions absent from that scope remain unknown. The gate cannot independently judge every extraction or authenticate the reviewer's identity, so original-source review remains part of the workflow.
+For a timed evaluation, the four stages have 150, 270, 150 and 30 second budgets. A failed stage stops the run; after a fix, the tester reuses its saved inputs and replays that stage alone. The timing record distinguishes a continuous live run from replay-assisted progress.
+
+A scoped review can miss annual plans or billing through another account. Unknown costs stay unknown. A refund lead is a question to investigate, not a promised refund.
 
 ## Install and use
 

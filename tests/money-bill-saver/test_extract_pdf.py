@@ -54,11 +54,12 @@ class ExtractionTests(unittest.TestCase):
         self.assertFalse(doc["pages"][0]["needs_visual_review"])
         self.assertEqual(doc["pages"][0]["unexpected_control_character_count"], 0)
         self.assertEqual(doc["pages"][0]["unexpected_control_characters"], [])
+        self.assertFalse(doc["pages"][0]["needs_field_cross_check"])
         self.assertEqual(doc["pages"][0]["review_reasons"], [])
         if os.name == "posix":
             self.assertEqual((out / "manifest.json").stat().st_mode & 0o777, 0o600)
 
-    def test_control_characters_flag_review_without_rewriting_extracted_text(self):
+    def test_control_characters_preserve_field_warning_without_forcing_page_render(self):
         src = self.root / "synthetic-controls.pdf"
         invoice(src)
         bad = "SYNTHETIC INVOICE ID DEMO\x000001; total 32.40\x00\x07\x7f\x85\x1f"
@@ -72,7 +73,8 @@ class ExtractionTests(unittest.TestCase):
         document = saved["documents"][0]
         pages = document["pages"]
         self.assertGreater(pages[0]["characters"], 30)
-        self.assertTrue(pages[0]["needs_visual_review"])
+        self.assertFalse(pages[0]["needs_visual_review"])
+        self.assertTrue(pages[0]["needs_field_cross_check"])
         self.assertEqual(pages[0]["review_reasons"], ["unexpected_control_characters"])
         self.assertEqual(pages[0]["unexpected_control_character_count"], 6)
         self.assertEqual(pages[0]["unexpected_control_characters"], [
@@ -83,6 +85,7 @@ class ExtractionTests(unittest.TestCase):
             {"codepoint": "U+0085", "count": 1},
         ])
         self.assertFalse(pages[1]["needs_visual_review"])
+        self.assertFalse(pages[1]["needs_field_cross_check"])
         self.assertEqual(pages[1]["unexpected_control_character_count"], 0)
         self.assertEqual(pages[1]["unexpected_control_characters"], [])
         expected = f"--- PAGE 1 ---\n{bad}\n\n--- PAGE 2 ---\n{normal}\n"

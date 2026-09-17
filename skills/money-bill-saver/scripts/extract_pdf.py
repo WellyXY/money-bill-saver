@@ -133,14 +133,18 @@ def extract_files(paths, output_dir, force=False, backend="auto"):
                 if unicodedata.category(char) == "Cc" and char not in "\t\n\r\f"
             )
             review_reasons = []
+            visual_reasons = []
             if len(stripped) < 30:
                 review_reasons.append("insufficient_text")
+                visual_reasons.append("insufficient_text")
             if controls:
                 review_reasons.append("unexpected_control_characters")
             if "\ufffd" in value:
                 review_reasons.append("replacement_characters")
+                visual_reasons.append("replacement_characters")
             if parser_warning:
                 review_reasons.append("parser_warning")
+                visual_reasons.append("parser_warning")
             page_rows.append({
                 "page": i,
                 "characters": len(stripped),
@@ -149,7 +153,11 @@ def extract_files(paths, output_dir, force=False, backend="auto"):
                     {"codepoint": f"U+{codepoint:04X}", "count": count}
                     for codepoint, count in sorted(controls.items())
                 ],
-                "needs_visual_review": bool(review_reasons),
+                # Control characters remain visible in the saved text and metadata.
+                # Their mere presence does not require rendering every page. The
+                # agent checks any field it actually uses that intersects one.
+                "needs_field_cross_check": bool(controls),
+                "needs_visual_review": bool(visual_reasons),
                 "review_reasons": review_reasons,
             })
             # Preserve suspicious characters, including trailing ones, for review.

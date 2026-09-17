@@ -250,11 +250,21 @@ def prepare(report):
 
 def render(report, evidence_path=None, require_checked=False):
     report = prepare(report)
-    spec = importlib.util.spec_from_file_location('audit_gate', Path(__file__).with_name('check_audit.py'))
-    gate = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gate)
-    quality = gate.assess(report, evidence_path)
-    # Recompute from local evidence and review artifacts; never trust a display flag in the report.
+    if report.get('report_mode') == 'focused' and evidence_path is None:
+        # The compact path intentionally has no second-agent evidence gate. It
+        # can describe its scope, but it cannot claim independent verification.
+        quality = {
+            'status': 'focused',
+            'summary': 'Selected billing evidence was reviewed once. No independent source review was run.',
+            'issues': [],
+            'scope': {'description': report.get('coverage', {}).get('summary', 'Selected billing evidence')},
+        }
+    else:
+        spec = importlib.util.spec_from_file_location('audit_gate', Path(__file__).with_name('check_audit.py'))
+        gate = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gate)
+        quality = gate.assess(report, evidence_path)
+    # Compute the display state here; never trust an embedded checked flag.
     report['computed']['audit_quality'] = quality
     if require_checked and quality['status'] != 'checked':
         raise ValueError('Audit coverage is provisional. Complete the evidence and independent review checks before final rendering.')
