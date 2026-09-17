@@ -38,7 +38,7 @@ Open a new task after installation; restart Codex if the skill does not appear. 
 
 For your own review, attach the bills you choose or specify an authorized mailbox and date range. A mailbox review needs a mail connector available in your host; this skill does not bundle one. Installing it does not grant account access.
 
-**Version: v0.8.2 / Stage 0 · [MIT](LICENSE)**
+**Stage 0 · [MIT](LICENSE)**
 
 Reports, interface copy, exports and repository documentation default to **English** unless another language is requested. The [interactive demo](https://wellyxy.github.io/money-bill-saver/) uses synthetic data and can be paused, replayed or navigated with a keyboard.
 
@@ -66,7 +66,7 @@ The inventory count includes uncertain and historical entries; it is not a count
 
 Missing update emails do not establish non-use, continued billing or refund eligibility. A gap in selected evidence is not proof that no later messages exist. Review leads are highlighted in both inventory views, carry a specific next check and do not add a refundable amount. A claim needs its own charge, period, usage or discrepancy evidence and applicable seller terms. User-reported non-use can support an honestly attributed goodwill request; it does not establish an entitlement.
 
-The document includes source timelines, issue details, official support routes and copyable local drafts where appropriate. Manage/both audits show a known monthly baseline with its components and unresolved prices or usage. Supporting JSON and CSV exports retain the evidence model and invoice checks. The webpage is the primary result; a Markdown report can provide additional detail.
+The document keeps the decisive source references, issue details and copyable local drafts where appropriate. Its known monthly subtotal shows the included components and unresolved prices or usage. The webpage is the primary result; longer evidence exports are available on request.
 
 ## Review coverage
 
@@ -83,33 +83,25 @@ The common workflow applies across merchants in the supplied evidence. Railway i
 
 Non-use triggers a separate refund assessment. Eligibility depends on the purchase channel, dates, applicable terms and evidence. A clearly attributed goodwill request can be appropriate when entitlement is not established. Cancelling future renewal and requesting a past-charge refund remain separate actions.
 
-## Workflow
+## The focused workflow
 
-1. Discover services from bills, receipts and welcome, plan, trial, renewal and cancellation notices. Keep services named by the user even when no receipt is found.
-2. Classify invoices, settled receipts, payment attempts, estimates, credits and incoming reimbursements before calculating totals.
-3. Follow later events for the same account and transaction. A newer payment or plan confirmation can change an earlier conclusion while the full timeline remains available.
-4. Check invoice arithmetic, identity, service periods, rates, usage and potential duplicate payments. Record evidence gaps explicitly.
-5. Assess usage and service dependencies, then prepare a supported correction, refund, benefit-restoration or future-cost decision.
-6. Apply the bundled design guidance and render the three-section webpage with evidence, actions and local drafts.
-7. Submit requests or change settings only within the user's separate authorization and the host's actual tool capabilities. Preserve receipts and verify outcomes.
+The default run aims to produce a useful private webpage within ten minutes:
 
-## Completion checks before the first report
+1. Search six months of invoice/receipt subjects in the selected mailbox. Triage headers and snippets first; use payment channels only for a named merchant or a specific gap.
+2. Read the latest material bill for each likely current service. For an unresolved charge, refund or cancellation, check the related support conversation and later replies before recommending action.
+3. Extract text only from material attachments. Compare affected fields with the original page when a scan, conflict or extraction problem matters to the conclusion.
+4. Write a compact [`quick.json`](skills/money-bill-saver/references/quick-model.md) with service decisions, sourced costs, dates and issues. `build_quick_report.py` creates the webpage and cost sheet. Routine one-time purchases appear in a short appendix.
+5. Preview the page once and deliver it with its known gaps. The page is labeled **Focused billing review**; it does not claim independent verification.
 
-Mailbox reviews default to the last **six calendar months**, unless you request another period. Start with billing channels, then use targeted sender/account/thread checks for cancellations, refunds and plan or payment changes. Read the selected query pages and relevant messages/attachments. Automatic brand-wide searches are off; unresolved questions stay visible for a separate follow-up. Annual plans without a notice in the selected period may be absent.
-
-New audits retain an `audit-evidence.json` manifest with the declared scope, actual search results, message dispositions and attachment coverage. Another reviewer checks the original evidence against the proposed report. The review is bound to the full report, its service/case rows and evidence content so edits to summaries, costs or sources require a new review.
-
-The executable gate checks scoped search coverage, selected pagination, unreviewed records, attachment coverage, review findings and stale bindings. Focused billing/lifecycle searches satisfy coverage; an unrestricted merchant pass is not required. The renderer recomputes the result instead of trusting a supplied `checked` flag. Follow the [evidence contract](skills/money-bill-saver/references/audit-evidence-contract.md):
+The first page is the normal completion point. Full source re-reading, audit packets and independent review run only when you ask for them via the separate [`money-bill-saver-review`](skills/money-bill-saver-review/SKILL.md) skill. Its Codex invocation is explicit-only. Install it only if you want that extra pass:
 
 ```sh
-python skills/money-bill-saver/scripts/check_audit.py \
-  --report dashboard.json --evidence audit-evidence.json --output audit-checks.json
-python skills/money-bill-saver/scripts/render_dashboard.py \
-  --input dashboard.json --evidence audit-evidence.json \
-  --require-checked --output dashboard.html
+npx --yes skills add WellyXY/money-bill-saver --skill money-bill-saver-review --agent codex --global --yes
 ```
 
-An incomplete audit can still be rendered as a clearly labeled preliminary report by omitting `--require-checked`. Without a manifest, legacy reports and examples are preliminary by default. A completed check applies to the declared source scope; facts and refund conditions absent from that scope remain unknown. The gate cannot independently judge every extraction or authenticate the reviewer's identity, so original-source review remains part of the workflow.
+For a timed evaluation, the four stages have 150, 270, 150 and 30 second budgets. A failed stage stops the run; after a fix, the tester reuses its saved inputs and replays that stage alone. The timing record distinguishes a continuous live run from replay-assisted progress.
+
+A scoped review can miss annual plans or billing through another account. Unknown costs stay unknown. A refund lead is a question to investigate, not a promised refund.
 
 ## Install and use
 
@@ -140,9 +132,9 @@ Installing the skill alone does not authorize mailbox scanning. A service tool o
 
 ## Context use and design guidance
 
-`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with payment channels, app stores, card alerts and trial notices, then checks related account events through targeted queries or the relevant thread within the selected scope.
+`SKILL.md` is the core workflow. References are loaded at the relevant collection, analysis or reporting step; README is not an audit prerequisite. The [mailbox search checklist](skills/money-bill-saver/references/email-search-checklist.md) starts with generic invoice/receipt subjects, supplements with payment channels, app stores, card alerts and trial notices, then checks targeted account events or relevant threads within scope.
 
-Reports use the fixed template. Ordinary runs read the short [webpage preflight](skills/money-bill-saver/references/web-design.md) and only **Section 14: FINAL PRE-FLIGHT CHECK** of the bundled [design-taste-frontend guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check). Its landing-page and framework rules do not override financial evidence or trigger a redesign. The full guide remains available for an explicitly requested redesign.
+Reports use the fixed template. Ordinary runs apply the short [webpage preflight](skills/money-bill-saver/references/web-design.md), the audit-specific integration of **design-taste-frontend**. Template changes start with Section 14 of the bundled [design guide](skills/money-bill-saver/references/design-taste-frontend/SKILL.md#14-final-pre-flight-check) and the relevant design sections. The full guide remains available for redesigns; financial evidence determines the inventory and content.
 
 The bundled guide is an unmodified copy of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), retaining its [MIT notice](skills/money-bill-saver/references/design-taste-frontend/LICENSE). The Manrope font retains its [SIL Open Font License](skills/money-bill-saver/assets/fonts/OFL.txt). Original Money Bill Saver material is available under the repository's [MIT license](LICENSE).
 
@@ -183,6 +175,17 @@ python skills/money-bill-saver/scripts/extract_mime.py \
 
 The MIME output preserves the original response, decoded attachments and readable derivatives with integrity bindings. Source entries start unread; review them before including their conclusions in an audit. Keep the output bundle together when moving it, and use an output directory separate from the input files. Complete saved tool results are supported; truncated previews must be retrieved again rather than treated as complete messages.
 
+Build a report from one canonical model (the input and imported evidence stay inside the private bundle):
+
+```sh
+python skills/money-bill-saver/scripts/build_audit.py \
+  --input /private/work/audit.json --output-dir /private/work
+```
+
+Start from [the compact model contract](skills/money-bill-saver/references/audit-model.md) and [synthetic model example](skills/money-bill-saver/assets/example-audit.json). The builder generates the report and checker inputs, retaining provisional status until real evidence and independent review satisfy the gate. `scripts/prepare_review.py` prepares evidence packets; it never approves a report on the reviewer's behalf. Existing `facts.json` and `dashboard.json` formats remain supported by their original tools.
+
+For a damaged PDF extraction, select a second local parser with `extract_pdf.py --backend pdftotext` when Poppler is available, preserving a fresh output directory and both extracts. Exact-byte duplicate PDFs in one extraction batch reuse parsing while retaining separate source records.
+
 Render the synthetic webpage example:
 
 ```sh
@@ -191,7 +194,7 @@ python skills/money-bill-saver/scripts/render_dashboard.py \
   --output work/dashboard.html
 ```
 
-All five tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
+All helper tools support `--help`; replacing existing output requires `--force`. The examples are synthetic and do not represent a real account. `work/` is excluded from version control. Keep real bills, messages, account mappings and audit outputs in a private working directory.
 
 ## Cost and evidence semantics
 
@@ -226,7 +229,16 @@ The synthetic test suite covers decimal arithmetic, document identity and duplic
 
 Completion-gate tests cover omitted localized search results, unfinished pagination, metadata-only messages, unread attachments, independent-review findings, other refund cases, changed reports and changed source files. MIME regressions cover truncated messages, inline invoice images, attached messages, HTML charset declarations, PDFs without file extensions, portable PDF manifests, and failed output replacement. Original responses and readable derivatives are checked for modification or omission. These tests verify the gate's behavior; they do not replace factual review of real documents.
 
-Browser and visual checks are separate from these automated tests. Use the host's permitted checks to verify the rendered document and report only checks that were actually performed.
+Browser and visual checks are separate from these automated tests. Ordinary audits use a basic report check; template changes use the full interaction/mobile checklist. Synthetic program tests do not establish real-mailbox discovery accuracy or runtime. Detailed benchmark traces and preserved first proposals are created only for a requested evaluation.
+
+## Unreleased — canonical audit pipeline
+
+- Required invoice/receipt discovery across senders/categories within the six-month scope, with explicit search-plan coverage.
+- One canonical observation/decision model generates the webpage and supporting views, preserving unknowns, accounts, currencies and source references.
+- Global candidate triage is separate from actual entity evidence; frozen review packets avoid all-to-all evidence associations.
+- PDF warnings trigger focused original-page checks; optional parser selection and batch extraction reuse preserve provenance.
+- Routine reports use a short display preflight. Full browser regressions remain part of template changes.
+- Live-mailbox performance and accuracy will be evaluated separately; no runtime reduction is claimed from synthetic checks.
 
 ## v0.8.2
 

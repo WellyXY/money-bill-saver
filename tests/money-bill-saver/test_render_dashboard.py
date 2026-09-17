@@ -29,6 +29,17 @@ class DashboardTests(unittest.TestCase):
         embedded = json.loads(re.search(r'<script id="report-data" type="application/json">(.*?)</script>', page, re.S).group(1))
         self.assertEqual(embedded['computed']['audit_quality']['status'], 'provisional')
 
+    def test_focused_report_identifies_its_limited_review(self):
+        report = {'report_mode': 'focused', 'subscriptions': [service()],
+                  'coverage': {'summary': 'Selected receipts from one mailbox.'},
+                  'computed': {'audit_quality': {'status': 'checked'}}}
+        page = dashboard.render(report)
+        embedded = json.loads(re.search(r'<script id="report-data" type="application/json">(.*?)</script>', page, re.S).group(1))
+        self.assertEqual(embedded['computed']['audit_quality']['status'], 'focused')
+        self.assertIn('Focused billing review', page)
+        with self.assertRaisesRegex(ValueError, 'coverage is provisional'):
+            dashboard.render(report, require_checked=True)
+
     def test_currency_totals_are_exact_and_separate(self):
         r = dashboard.prepare({'subscriptions': [service('a', '0.10'), service('b', '0.20'), service('c', '100', 'TWD')]})
         self.assertEqual(r['computed']['known_monthly'], {'USD': '0.30', 'TWD': '100.00'})

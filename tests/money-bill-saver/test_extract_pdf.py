@@ -54,11 +54,12 @@ class ExtractionTests(unittest.TestCase):
         self.assertFalse(doc["pages"][0]["needs_visual_review"])
         self.assertEqual(doc["pages"][0]["unexpected_control_character_count"], 0)
         self.assertEqual(doc["pages"][0]["unexpected_control_characters"], [])
+        self.assertFalse(doc["pages"][0]["needs_field_cross_check"])
         self.assertEqual(doc["pages"][0]["review_reasons"], [])
         if os.name == "posix":
             self.assertEqual((out / "manifest.json").stat().st_mode & 0o777, 0o600)
 
-    def test_control_characters_flag_review_without_rewriting_extracted_text(self):
+    def test_control_characters_preserve_field_warning_without_forcing_page_render(self):
         src = self.root / "synthetic-controls.pdf"
         invoice(src)
         bad = "SYNTHETIC INVOICE ID DEMO\x000001; total 32.40\x00\x07\x7f\x85\x1f"
@@ -72,7 +73,8 @@ class ExtractionTests(unittest.TestCase):
         document = saved["documents"][0]
         pages = document["pages"]
         self.assertGreater(pages[0]["characters"], 30)
-        self.assertTrue(pages[0]["needs_visual_review"])
+        self.assertFalse(pages[0]["needs_visual_review"])
+        self.assertTrue(pages[0]["needs_field_cross_check"])
         self.assertEqual(pages[0]["review_reasons"], ["unexpected_control_characters"])
         self.assertEqual(pages[0]["unexpected_control_character_count"], 6)
         self.assertEqual(pages[0]["unexpected_control_characters"], [
@@ -83,6 +85,7 @@ class ExtractionTests(unittest.TestCase):
             {"codepoint": "U+0085", "count": 1},
         ])
         self.assertFalse(pages[1]["needs_visual_review"])
+        self.assertFalse(pages[1]["needs_field_cross_check"])
         self.assertEqual(pages[1]["unexpected_control_character_count"], 0)
         self.assertEqual(pages[1]["unexpected_control_characters"], [])
         expected = f"--- PAGE 1 ---\n{bad}\n\n--- PAGE 2 ---\n{normal}\n"
@@ -142,6 +145,50 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(backend, "pdftotext")
         self.assertFalse(warning)
         self.assertEqual(run.call_args.args[0][-2:], [str(src), "-"])
+
+    def test_explicit_second_parser_preserves_signs_and_records_backend(self):
+        src = self.root / "invoice.pdf"
+        invoice(src)
+        response = subprocess.CompletedProcess([], 0, b"Invoice amount 32.40, credit -5.00, id DEMO-0001\f", b"")
+        with patch.object(module.shutil, "which", return_value="/usr/bin/pdftotext"), patch.object(module.subprocess, "run", return_value=response):
+            result = module.extract_files([src], self.root / "alternative", backend="pdftotext")
+        doc = result["documents"][0]
+        self.assertEqual(doc["backend"], "pdftotext")
+        self.assertIn("credit -5.00", Path(doc["text_file"]).read_text())
+        self.assertEqual(doc["source_sha256"], hashlib.sha256(src.read_bytes()).hexdigest())
+
+    def test_identical_bytes_reuse_extraction_but_keep_both_sources(self):
+        src = self.root / "first.pdf"
+        invoice(src)
+        duplicate = self.root / "second.pdf"
+        duplicate.write_bytes(src.read_bytes())
+        with patch.object(module, "extract_pages", wraps=module.extract_pages) as parse:
+            result = module.extract_files([src, duplicate], self.root / "out")
+        self.assertEqual(parse.call_count, 1)
+        a, b = result["documents"]
+        self.assertEqual(a["source_sha256"], b["source_sha256"])
+        self.assertNotEqual(a["source"], b["source"])
+        self.assertNotEqual(a["text_file"], b["text_file"])
+        self.assertFalse(a["extraction_reused"])
+        self.assertTrue(b["extraction_reused"])
+
+    def test_parser_and_decode_warnings_require_review_even_with_long_text(self):
+        src = self.root / "invoice.pdf"
+        invoice(src)
+        text = "Invoice DEMO-0001 contains damaged text \ufffd, total 32.40"
+        with patch.object(module, "extract_pages", return_value=([text], "synthetic", True)):
+            result = module.extract_files([src], self.root / "out")
+        page = result["documents"][0]["pages"][0]
+        self.assertTrue(page["needs_visual_review"])
+        self.assertEqual(page["review_reasons"], ["replacement_characters", "parser_warning"])
+
+    def test_unavailable_explicit_parser_does_not_silently_switch_backend(self):
+        src = self.root / "invoice.pdf"
+        invoice(src)
+        with patch.object(module.shutil, "which", return_value=None):
+            with self.assertRaises(module.ExtractionError):
+                module.extract_files([src], self.root / "out", backend="pdftotext")
+        self.assertFalse((self.root / "out").exists())
 
 
 if __name__ == "__main__":

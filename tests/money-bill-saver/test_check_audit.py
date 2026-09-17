@@ -591,6 +591,149 @@ class AuditCoverageTests(unittest.TestCase):
         self.manifest['sources'][-1]['note'] = ''
         self.assertIn('missing_source_reason', self.codes(self.assess()))
 
+    def global_discovery(self, ids, next_token=None):
+        self.mailbox([{'id': mid} for mid in ids], next_token=next_token,
+                     query='after:2026/03/16 before:2026/09/17 (invoice OR receipt OR 帳單)')
+        self.manifest['searches'][0].update(scope='discovery', service_ids=[])
+
+    def test_global_generic_discovery_covers_outside_category_source_without_fanout(self):
+        self.global_discovery(['cloudflare-like', 'news'])
+        self.message('cloudflare-like', payload={'mime_type': 'text/plain', 'body': {
+            'content': 'Invoice notice delivered outside purchases: USD16.56 due; no successful payment asserted.'}})
+        self.manifest['sources'].append({'id': 'gmail:news', 'service_ids': [], 'kind': 'message',
+                                         'disposition': 'irrelevant', 'note': 'Editorial newsletter, not a purchased service.'})
+        result = self.assess()
+        self.assertEqual(result['status'], 'checked')
+        self.assertEqual(self.manifest['searches'][0]['service_ids'], [])
+        self.assertEqual(self.manifest['sources'][-1]['service_ids'], [])
+        self.assertNotIn('gmail:news', self.review['services'][0]['reviewed_source_ids'])
+
+    def test_global_discovery_missing_candidate_and_missing_page_still_block(self):
+        self.global_discovery(['omitted'], next_token='next')
+        codes = self.codes(self.assess())
+        self.assertIn('untriaged_search_result', codes)
+        self.assertIn('incomplete_pagination', codes)
+        self.assertIn('missing_search_coverage', codes)
+
+    def test_global_unread_unassigned_candidate_stays_provisional(self):
+        self.global_discovery(['unknown'])
+        self.manifest['sources'].append({'id': 'gmail:unknown', 'service_ids': [], 'kind': 'message',
+                                         'disposition': 'unread', 'note': 'Candidate merchant identity not established yet.'})
+        codes = self.codes(self.assess())
+        self.assertIn('unreviewed_source', codes)
+        self.assertNotIn('invalid_service_references', codes)
+
+    def test_reviewed_global_source_must_be_associated_with_real_entity(self):
+        self.global_discovery(['abc'])
+        self.message()
+        self.manifest['sources'][-1]['service_ids'] = []
+        self.assertIn('invalid_service_references', self.codes(self.assess()))
+
+    def test_irrelevant_candidate_is_triaged_once_across_discovery_and_targeted_queries(self):
+        self.global_discovery(['news'])
+        self.manifest['sources'].append({'id': 'gmail:news', 'kind': 'message', 'service_ids': [],
+                                         'disposition': 'irrelevant', 'note': 'Editorial comparison mentions Acme; no account-specific billing facts.'})
+        self.manifest['searches'].append({'id': 'targeted', 'kind': 'billing', 'service_ids': ['acme'],
+                                         'query': 'from:acme.example', 'result_file': 'targeted.json'})
+        self.write('targeted.json', {'emails': [{'id': 'news'}], 'next_page_token': None})
+        self.assertEqual(self.assess()['status'], 'checked')
+        self.assertEqual(self.manifest['sources'][-1]['service_ids'], [])
+
+    def test_reviewed_targeted_result_bound_to_wrong_entity_still_fails(self):
+        self.mailbox([{'id': 'abc'}])
+        self.message()
+        self.report['other_cases'] = [{'id': 'other', 'name': 'Other'}]
+        self.manifest['sources'][-1]['service_ids'] = ['other']
+        self.assertIn('result_service_mismatch', self.codes(self.assess()))
+
+    def test_global_discovery_cannot_assign_every_result_to_entities(self):
+        self.global_discovery([])
+        self.manifest['searches'][0]['service_ids'] = ['acme']
+        self.assertIn('discovery_entity_fanout', self.codes(self.assess()))
+
+    def test_irrelevant_global_result_does_not_cover_unsupported_named_service(self):
+        self.global_discovery(['news'])
+        self.manifest['sources'].append({'id': 'gmail:news', 'service_ids': ['acme'], 'kind': 'message',
+                                         'disposition': 'irrelevant', 'note': 'Generic article mentions merchant only.'})
+        self.assertIn('missing_search_coverage', self.codes(self.assess()))
+        self.manifest['searches'].append({'id': 'named-no-results', 'kind': 'billing', 'service_ids': ['acme'],
+                                         'query': 'from:acme.example', 'result_file': 'named.json'})
+        self.write('named.json', {'emails': [], 'next_page_token': None})
+        self.review.pop('evidence_sha256', None)
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def canonical_plan(self):
+        self.manifest['scope'].update(workflow_version='audit-1', search_plan={
+            'schema_version': '1', 'generic_invoice_receipt': {
+                'search_ids': ['search'], 'coverage': 'all_categories',
+                'note': 'Generic invoice and receipt strategy including localized terms; reviewer checks actual query scope.'}})
+        self.write('audit-evidence.json', self.manifest)
+        self.review['services'][0]['entity_evidence_sha256'] = audit_check.entity_evidence_digest(
+            self.base / 'audit-evidence.json', 'acme')
+
+    def test_new_workflow_requires_plan_while_legacy_remains_supported(self):
+        self.mailbox()
+        self.assertEqual(self.assess()['status'], 'checked')
+        self.manifest['scope']['workflow_version'] = 'audit-1'
+        self.assertIn('invalid_search_plan', self.codes(self.assess()))
+
+    def test_targeted_workflow_does_not_require_mailbox_wide_discovery(self):
+        self.mailbox()
+        self.manifest['scope'].update(workflow_version='audit-1', audit_kind='targeted',
+                                      description='Review only the Acme September charge and related cancellation.')
+        self.write('audit-evidence.json', self.manifest)
+        self.review['services'][0]['entity_evidence_sha256'] = audit_check.entity_evidence_digest(
+            self.base / 'audit-evidence.json', 'acme')
+        self.assertEqual(self.assess()['status'], 'checked')
+
+    def test_targeted_workflow_still_needs_entity_targeted_coverage(self):
+        self.global_discovery(['abc'])
+        self.message()
+        self.manifest['scope']['audit_kind'] = 'targeted'
+        self.assertIn('missing_search_coverage', self.codes(self.assess()))
+
+    def test_unknown_audit_kind_cannot_skip_generic_plan(self):
+        self.mailbox()
+        self.manifest['scope'].update(workflow_version='audit-1', audit_kind='inventroy')
+        self.assertIn('invalid_audit_kind', self.codes(self.assess()))
+
+    def test_canonical_generic_plan_binds_first_page_and_complete_chain(self):
+        self.global_discovery(['abc'])
+        self.message()
+        self.canonical_plan()
+        self.assertEqual(self.assess()['status'], 'checked')
+        self.manifest['scope']['search_plan']['generic_invoice_receipt']['search_ids'] = ['missing']
+        self.assertIn('incomplete_search_plan', self.codes(self.assess()))
+
+    def test_canonical_plan_rejects_empty_ids_and_unknown_version(self):
+        self.global_discovery(['abc'])
+        self.message()
+        self.canonical_plan()
+        self.manifest['scope']['search_plan']['generic_invoice_receipt']['search_ids'] = []
+        self.assertIn('invalid_search_plan', self.codes(self.assess()))
+        self.manifest['scope']['search_plan']['generic_invoice_receipt']['search_ids'] = ['search']
+        self.manifest['scope']['search_plan']['schema_version'] = '2'
+        self.assertIn('invalid_search_plan', self.codes(self.assess()))
+
+    def test_new_workflow_binds_each_entity_material_evidence(self):
+        self.global_discovery(['abc'])
+        self.message()
+        self.canonical_plan()
+        self.assertEqual(self.assess()['status'], 'checked')
+        (self.base / 'invoice.txt').write_text('Changed material invoice, requiring new entity review.')
+        # Rebinding global evidence alone cannot silently reuse a stale entity review.
+        self.review.pop('evidence_sha256', None)
+        self.assertIn('stale_entity_evidence_review', self.codes(self.assess()))
+
+    def test_global_discovery_scope_cannot_change_on_continuation(self):
+        self.global_discovery(['abc'], next_token='next')
+        self.message()
+        self.manifest['searches'].append({**self.manifest['searches'][0], 'id': 'next',
+                                         'scope': 'entity', 'service_ids': ['acme'],
+                                         'request_page_token': 'next', 'result_file': 'next.json'})
+        self.write('next.json', {'emails': [], 'next_page_token': None})
+        self.assertIn('pagination_scope_mismatch', self.codes(self.assess()))
+
     def test_escape_paths_and_symlinks_are_rejected(self):
         self.manifest['sources'][0]['file'] = '../outside.txt'
         self.assertIn('inaccessible_evidence_file', self.codes(self.assess()))

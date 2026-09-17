@@ -169,6 +169,46 @@ def evidence_digest(evidence_path):
     return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
 
 
+def entity_evidence_records(evidence_path):
+    """Return material source metadata and exact file hashes per true entity.
+
+    Global discovery and irrelevant candidates remain in evidence_digest. They
+    must not fan out into every entity's review packet. A shared material source
+    can still belong to several entities when the author explicitly says so.
+    """
+    path = Path(evidence_path).resolve(strict=True)
+    manifest = json.loads(path.read_text(encoding='utf-8'))
+    base, result = path.parent, {}
+    for source in manifest['sources']:
+        if source.get('disposition') == 'irrelevant':
+            continue
+        files = {}
+        name = source.get('file')
+        if name is not None:
+            if not _text(name) or Path(name).is_absolute():
+                raise ValueError('Entity evidence requires relative file paths')
+            target = (base / name).resolve(strict=True)
+            if not target.is_relative_to(base) or not target.is_file():
+                raise ValueError('Entity evidence cannot read outside the manifest directory')
+            data = target.read_bytes()
+            if not data:
+                raise ValueError('Entity evidence cannot include empty files')
+            files[name] = hashlib.sha256(data).hexdigest()
+            if source.get('kind') == 'message':
+                files.update(_bound_message_files(_unwrap(json.loads(data)), target, base, source.get('id')))
+        for sid in source.get('service_ids', []):
+            record = result.setdefault(sid, {'sources': [], 'files': {}})
+            record['sources'].append(source)
+            record['files'].update(files)
+    return result
+
+
+def entity_evidence_digest(evidence_path, service_id):
+    """Hash only the material sources associated with this entity."""
+    return service_digest(entity_evidence_records(evidence_path).get(
+        service_id, {'sources': [], 'files': {}}))
+
+
 def _text(value):
     return isinstance(value, str) and bool(value.strip())
 
@@ -307,11 +347,13 @@ def _assess(report, evidence_path=None):
                 raise ValueError()
         except (ValueError, TypeError):
             add('invalid_scope_date', 'Scope as_of must be an ISO date or a timestamp with timezone.')
+        if scope.get('audit_kind', 'inventory') not in {'inventory', 'targeted'}:
+            add('invalid_audit_kind', 'Scope audit_kind must be inventory or targeted; describe a targeted task narrowly in scope.description.')
 
-    def service_refs(row, context):
+    def service_refs(row, context, allow_empty=False):
         refs = row.get('service_ids')
-        if not isinstance(refs, list) or not refs or any(not _text(s) or s not in by_service for s in refs) or len(set(refs)) != len(refs):
-            add('invalid_service_references', f'{context}: service_ids must list known, distinct services.')
+        if not isinstance(refs, list) or (not refs and not allow_empty) or any(not _text(s) or s not in by_service for s in refs) or len(set(refs)) != len(refs):
+            add('invalid_service_references', f'{context}: service_ids must list known, distinct entities; material sources cannot be unassigned.')
             return []
         return refs
 
@@ -331,7 +373,7 @@ def _assess(report, evidence_path=None):
         source_map[sid] = source
         if 'result_file' in source:
             add('ambiguous_source_file', f'{sid}: sources use file, not the search-only result_file field.')
-        refs = service_refs(source, sid)
+        refs = service_refs(source, sid, allow_empty=source.get('disposition') in {'irrelevant', 'unread'})
         source_refs[sid] = refs
         kind, disposition = source.get('kind'), source.get('disposition')
         if kind not in {'message', 'attachment', 'account_page', 'document'}:
@@ -404,7 +446,8 @@ def _assess(report, evidence_path=None):
     if not isinstance(searches, list):
         add('invalid_searches', 'searches must be an array, including an empty array in files mode.')
         searches = []
-    pages, search_ids, search_coverage = {}, set(), set()
+    pages, search_ids, search_coverage, targeted_coverage = {}, set(), set(), set()
+    search_by_id, query_scopes, query_candidates = {}, {}, {}
     for search in searches:
         if not isinstance(search, dict) or not _text(search.get('id')):
             add('invalid_search', 'Every search needs an ID.')
@@ -415,7 +458,13 @@ def _assess(report, evidence_path=None):
         if sid in search_ids:
             add('duplicate_search', f'Duplicate search {sid}.')
         search_ids.add(sid)
-        refs = service_refs(search, sid)
+        search_by_id[sid] = search
+        search_scope = search.get('scope', 'entity')
+        if search_scope not in {'discovery', 'entity'}:
+            add('invalid_search_scope', f'{sid}: search scope must be discovery or entity.')
+        refs = service_refs(search, sid, allow_empty=search_scope == 'discovery')
+        if search_scope == 'discovery' and refs:
+            add('discovery_entity_fanout', f'{sid}: global discovery must have empty service_ids; associate material sources after triage.')
         kind, query = search.get('kind'), search.get('query')
         if kind not in {'merchant_discovery', 'billing', 'lifecycle'} or not _text(query):
             add('invalid_search', f'{sid}: valid kind and exact query are required.')
@@ -437,10 +486,13 @@ def _assess(report, evidence_path=None):
             add('invalid_page_token', f'{sid}: page tokens must be nonempty strings or null.')
             continue
         key = (query, token)
+        if query in query_scopes and query_scopes[query] != search_scope:
+            add('pagination_scope_mismatch', f'{sid}: all pages of an exact query must use the same scope.')
+        query_scopes[query] = search_scope
         if key in pages:
             add('duplicate_search_page', f'{sid}: same query and page token recorded more than once.')
         pages[key] = (next_token, set(refs))
-        search_coverage.update(refs)
+        query_candidates.setdefault(query, set())
         counts['search_results'] += len(results)
         for entry in results:
             mid = entry.get('id') if isinstance(entry, dict) else entry
@@ -450,7 +502,12 @@ def _assess(report, evidence_path=None):
             source = messages.get(_message_id(mid))
             if source is None:
                 add('untriaged_search_result', f'{sid}: message {mid} has no source disposition and reason.')
-            elif not set(refs).issubset(source_refs[source['id']]):
+            elif search_scope == 'discovery':
+                if source.get('disposition') != 'irrelevant':
+                    query_candidates[query].update(source_refs[source['id']])
+            elif (source.get('disposition') != 'irrelevant'
+                  and not (source.get('disposition') == 'unread' and not source_refs[source['id']])
+                  and not set(refs).issubset(source_refs[source['id']])):
                 add('result_service_mismatch', f'{sid}: message {mid} does not cover all searched service references.')
     counts['searches'] = len(search_ids)
     for (query, token), (next_token, refs) in pages.items():
@@ -460,11 +517,13 @@ def _assess(report, evidence_path=None):
             add('pagination_service_mismatch', f'Next page drops service coverage: {query}')
         if token is not None and not any(q == query and nxt == token for (q, _), (nxt, _) in pages.items()):
             add('orphan_search_page', f'Continuation has no saved preceding page: {query}')
+    complete_queries = set()
     for query in {q for q, _ in pages}:
         seen, token = set(), None
         if (query, None) not in pages:
             add('missing_first_page', f'Search lacks its first page: {query}')
             continue
+        terminated = False
         while (query, token) in pages:
             if token in seen:
                 add('pagination_cycle', f'Pagination did not terminate: {query}')
@@ -472,10 +531,39 @@ def _assess(report, evidence_path=None):
             seen.add(token)
             token = pages[(query, token)][0]
             if token is None:
+                terminated = True
                 break
-        if {t for q, t in pages if q == query} - seen:
+        disconnected = {t for q, t in pages if q == query} - seen
+        if disconnected:
             add('disconnected_search_page', f'Saved pages are not reachable from the first page: {query}')
+        if terminated and not disconnected:
+            complete_queries.add(query)
+            if query_scopes[query] == 'discovery':
+                search_coverage.update(query_candidates[query])
+            else:
+                search_coverage.update(pages[(query, None)][1])
+                targeted_coverage.update(pages[(query, None)][1])
+    plan = scope.get('search_plan') if scope else None
+    requires_plan = bool(scope and scope.get('mode') == 'mailbox' and scope.get('workflow_version') == 'audit-1'
+                         and scope.get('audit_kind', 'inventory') == 'inventory')
+    if plan is not None or requires_plan:
+        generic = plan.get('generic_invoice_receipt') if isinstance(plan, dict) else None
+        ids = generic.get('search_ids') if isinstance(generic, dict) else None
+        if (not isinstance(plan, dict) or plan.get('schema_version') != '1'
+                or not isinstance(generic, dict) or generic.get('coverage') != 'all_categories'
+                or not _text(generic.get('note')) or not isinstance(ids, list) or not ids
+                or any(not _text(sid) for sid in ids) or len(set(ids)) != len(ids)):
+            add('invalid_search_plan', 'Search plan schema 1 needs a declared generic_invoice_receipt strategy, all_categories coverage, note and nonempty distinct first-page search_ids. Query semantics still require independent review.')
+        else:
+            for sid in ids:
+                search = search_by_id.get(sid)
+                if (not search or search.get('scope') != 'discovery' or search.get('service_ids') != []
+                        or search.get('request_page_token') is not None
+                        or search.get('query') not in complete_queries):
+                    add('incomplete_search_plan', f'{sid}: generic discovery must reference a saved, complete discovery query starting at its first page.')
     if scope and scope['mode'] == 'mailbox':
+        if scope.get('audit_kind') == 'targeted':
+            search_coverage = targeted_coverage
         for sid in by_service.keys() - search_coverage:
             add('missing_search_coverage', 'No mailbox search with a saved result page covers this service or case.', sid)
     if scope and scope['mode'] == 'files' and not source_map:
@@ -495,6 +583,13 @@ def _assess(report, evidence_path=None):
             add('stale_report_review', 'Substantive report data changed after independent review, or its report digest is missing.')
     except (ValueError, TypeError):
         add('invalid_report_digest', 'Substantive report data cannot be represented as canonical JSON.')
+    require_entity_digest = bool(scope and scope.get('workflow_version') == 'audit-1')
+    entity_records = None
+    if require_entity_digest or any(isinstance(row, dict) and 'entity_evidence_sha256' in row for row in review['services']):
+        try:
+            entity_records = entity_evidence_records(manifest_path)
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            add('invalid_entity_evidence_digest', f'Entity evidence could not be bound: {exc}')
     reviewed = set()
     for row in review['services']:
         if not isinstance(row, dict) or not _text(row.get('service_id')) or row['service_id'] not in by_service:
@@ -513,6 +608,10 @@ def _assess(report, evidence_path=None):
                 add('stale_independent_review', 'Service row changed after independent review.', sid)
         except (ValueError, TypeError):
             add('invalid_service_digest', 'Service cannot be represented as canonical JSON.', sid)
+        if entity_records is not None and (require_entity_digest or 'entity_evidence_sha256' in row):
+            expected = service_digest(entity_records.get(sid, {'sources': [], 'files': {}}))
+            if row.get('entity_evidence_sha256') != expected:
+                add('stale_entity_evidence_review', 'Material sources for this entity changed or its entity evidence digest is missing.', sid)
         refs = row.get('reviewed_source_ids')
         if not isinstance(refs, list) or any(not _text(ref) for ref in refs):
             add('invalid_review_sources', 'reviewed_source_ids must be an array of source IDs.', sid)

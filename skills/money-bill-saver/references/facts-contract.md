@@ -1,8 +1,8 @@
 # Local facts contract (v0.1)
 
-Use this contract after reading selected invoices. It describes a local working file, not a cloud upload format. `check_facts.py` checks invoice arithmetic and document identity; Codex supplies extraction, interpretation, subscription decisions and drafts.
+Use this contract for invoice arithmetic semantics after reading selected invoices. New audits author [audit.json](audit-model.md); the builder projects its invoices into this v0.1 checker format. It describes a local generated working file, not a cloud upload format. `check_facts.py` checks invoice arithmetic and document identity; Codex supplies extraction, interpretation, subscription decisions and drafts.
 
-Before transcribing extracted PDFs, inspect each page's manifest integrity metadata. `unexpected_control_character_count` and `unexpected_control_characters` identify Unicode control characters other than normal tab, newline, carriage return and form feed; affected pages have `needs_visual_review: true` and the reason `unexpected_control_characters`. The helper preserves the extracted text, including NULs and other suspicious characters. Cross-check affected identifiers, amounts and other fields against the original PDF or matching authoritative evidence. Never guess that a NUL represents a hyphen, silently discard it, or use a malformed identifier to establish document identity; leave unresolved fields unknown.
+Before transcribing a material PDF, inspect its page metadata. `unexpected_control_character_count` and `unexpected_control_characters` identify Unicode controls other than normal whitespace. Such pages retain `needs_field_cross_check: true` and the `unexpected_control_characters` reason; controls alone do not set `needs_visual_review`. Cross-check an affected identifier, amount or date only when that field is used in the report, using a clean duplicate, an alternate extraction or the original page. Sparse text, replacement characters and parser warnings can still require visual review. Preserve the extracted text and control metadata. Never guess what a NUL represents or use a malformed identifier to establish document identity; leave unresolved fields unknown.
 
 For PDFs extracted through `extract_mime.py`, use the attachment's `pdf_manifest_file` to find this page metadata. Inside that PDF manifest, resolve relative `source` and `text_file` paths against the manifest's directory; they remain valid when the whole mail bundle moves. Review any MIME decoding warnings against the original before transcribing HTML or CSV evidence.
 
@@ -71,7 +71,7 @@ The example and all packaged sample amounts are synthetic. Do not infer an actua
 
 The arithmetic schema is merchant-agnostic. A one-time invoice may use null `subscription_ref`, `cycle: one_time` and `recurring: false`. Quotes, pending authorizations, payment-only records and standalone credit notes belong in case evidence rather than being forced into new payable invoices. A negative printed invoice balance is an adjustment balance, not verified cash received.
 
-Use a sourced case note or `cases.json` for the following evidence. These fields are maintained by the agent; `check_facts.py` does not validate them or implement a refund-eligibility engine.
+Record the following evidence in the canonical audit events/decisions; case views are generated from that data. Legacy inputs may use sourced case notes or `cases.json`. These judgments remain agent-authored; `check_facts.py` does not implement a refund-eligibility engine.
 
 - Stable `case_id`, merchant, seller/payment channel, account reference, invoice record references and document kinds.
 - Payment observations: local transaction reference, date, amount, currency, state (`settled`, `pending`, `failed`, `refunded`, `unknown`), and sources. Match duplicate candidates by confirmed transaction identity; report unsettled identity as unknown.
@@ -93,7 +93,7 @@ For each unique record the checker reports `reconciled`, `mismatch`, `incomplete
 
 ## Local outcomes (maintained by Codex)
 
-Keep `outcomes.json` separately when handling real cases. Each event needs a local event ID, case/action ID, observation date, type, status, amount/currency if applicable and source references. Reuse the same event ID when updating evidence; do not double count the same benefit.
+Record outcomes once in the canonical audit model and generate `outcomes.json` when real cases have outcome data. Each event needs a local event ID, case/action ID, observation date, type, status, amount/currency if applicable and source references. Reuse the same event ID when updating evidence; do not double count the same benefit.
 
 - Types: `cash_refund`, `credit_granted`, `credit_used`, `liability_waived`, `benefit_restored`, `service_extended`, `renewal_disabled`, `plan_changed`, `cap_changed`, `forecast_savings`, `observed_savings`. Describe a restored feature, allowance or extension and verify its account/effective date; do not invent a cash value for it.
 - Distinguish `reported`, `accepted_pending_verification`, `verified` and `rejected`. User statements may be reported evidence; a merchant promise alone cannot verify cash arrival.
