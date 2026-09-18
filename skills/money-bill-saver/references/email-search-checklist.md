@@ -8,13 +8,13 @@ Record account, timezone, inclusive first/last dates and excluded folders. In Gm
 
 ## 1. One billing discovery query
 
-Search invoice and receipt **subjects across senders and categories**, including archived mail if authorized:
+Search high-signal billing, trial and subscription **subjects**, plus Stripe sender mail, across categories. Include archived mail if authorized:
 
 ```text
-<DATES> {subject:invoice subject:receipt subject:"billing statement" subject:發票 subject:收據 subject:帳單 subject:月結單 subject:應付憑據}
+<DATES> {subject:invoice subject:receipt subject:"billing statement" subject:"free trial" subject:"free trail" subject:trial subject:subscription from:stripe.com subject:發票 subject:收據 subject:帳單 subject:月結單 subject:應付憑據}
 ```
 
-Page the same query until its next-page token ends. Deduplicate by account + message ID. Save the result IDs, sender, subject, date and snippet; fetch no bodies yet. If the provider lacks subject search, use its closest billing query and state the substitution.
+Page the same query until its next-page token ends. Deduplicate by account + message ID. Save the result IDs, sender, subject, date and snippet; fetch no bodies yet. Use `from:stripe.com` instead of a bare `Stripe` word, and `subject:subscription` instead of a bare `subscription` word, to avoid broad newsletter matches. These are candidate clues, not proof of a paid subscription or settled charge. If the provider lacks sender or subject search, use its closest billing query and state the substitution.
 
 Triage each hit into: **current cost**, **specific payment/refund/renewal question**, **possibly relevant**, or **unrelated**. Read full bodies for the first two groups and ambiguous hits that may change them. For each merchant, read its latest material bill first. Older bills are needed only for a price change, conflict or particular refund period. Batch clear promotions and routine one-time receipts into a count and reason; they do not need individual body reads or report rows. Keep user-named services visible even if no message matches.
 
@@ -28,7 +28,7 @@ For a named merchant that was not found, run one focused sender/product/account 
 
 ## 3. Open another channel only for a concrete gap
 
-- A named processor-billed merchant lacks a receipt: inspect `from:stripe.com` or the known processor, then filter the returned seller/product/account metadata.
+- A named processor-billed merchant still lacks a receipt after the initial Stripe sender search: filter the saved Stripe results by seller/product/account first; search a different known processor or a targeted merchant alias only if needed. Do not repeat the same Stripe query.
 - An App Store purchase is named or observed: search its known Apple receipt phrases and account. Do not treat Apple as the service vendor.
 - A specific card charge is questioned: search a known card-alert sender and merchant/amount; an alert is not settlement evidence.
 - A trial or renewal question lacks a bill: search the named service's trial or renewal notice. Verify the later plan state.

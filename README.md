@@ -49,7 +49,7 @@ Non-use triggers a separate refund assessment. Eligibility depends on the purcha
 
 ## Default focused workflow
 
-For a mailbox review, use a six-month window unless the user supplies dates. Search high-signal billing subjects and named merchants, save metadata-rich result pages once, and build a local candidate index. Read decisive invoices, receipts and later outcomes for issue-bearing merchants. Write a compact `quick-1` decision file, then run `scripts/build_quick_report.py` and `scripts/preview_quick.py`. Deliver the focused page with its scope and unknowns; do not automatically run the full evidence gate. Known official account entries can be linked as possible status-check destinations, and plausible same-purpose services can carry tentative keep-one prompts without inventing savings.
+For a mailbox review, use a six-month window unless the user supplies dates. Search high-signal billing, trial and subscription subjects, Stripe sender mail, and named merchants; save metadata-rich result pages once and build a local candidate index. Read decisive invoices, receipts and later outcomes for issue-bearing merchants. Write a compact `quick-1` decision file, then run `scripts/build_quick_report.py` and `scripts/preview_quick.py`. Deliver the focused page with its scope and unknowns; do not automatically run the full evidence gate. Known official account entries can be linked as possible status-check destinations, and plausible same-purpose services can carry tentative keep-one prompts without inventing savings.
 
 ## Detailed audit workflow (on request)
 
